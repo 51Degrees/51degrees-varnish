@@ -33,14 +33,14 @@
   },
   {
     "Image": "ubuntu-24.04",
-    "Name": "ubuntu-24.04_DD",
+    "Name": "ubuntu_DD",
     "VarnishVersion": "8.0.1",
     "RunPerformance": true,
     "PackageRequirement": true
   },
   {
     "Image": "ubuntu-24.04",
-    "Name": "ubuntu-24.04_IPI",
+    "Name": "ubuntu_IPI",
     "VarnishVersion": "8.0.1",
     "RunPerformance": true,
     "PackageRequirement": true
