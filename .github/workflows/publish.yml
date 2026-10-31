@@ -6,6 +6,10 @@ on:
       dryrun:
         type: boolean
         default: false
+      allow-version-bump:
+        description: 'Publish even though the version moves the major or minor place.'
+        type: boolean
+        default: false
 
 jobs:
   Publish:
@@ -15,6 +19,7 @@ jobs:
       repo-name: ${{ github.event.repository.name }}
       org-name: ${{ github.event.repository.owner.login }}
       dryrun: ${{ inputs.dryrun || false }}
+      allow-version-bump: ${{ inputs.allow-version-bump || false }}
     secrets:
       token: ${{ secrets.ACCESS_TOKEN }}
       DeviceDetection: ${{ secrets.DEVICE_DETECTION_KEY }}
