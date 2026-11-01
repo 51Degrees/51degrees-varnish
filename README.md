@@ -245,6 +245,10 @@ set req.http.x-device = fiftyonedegrees.match_all("HardwareName,BrowserName,Plat
 
 gives a header like `x-device: Desktop,Firefox,Ubuntu`.
 
+### Header length limit
+
+A single header such as `User-Agent`, or a pseudo header (several headers read as one), is ignored if it is over 500 bytes. Detection carries on with the rest of the evidence, and the response is otherwise unaffected. If no other evidence is usable, the values are empty, as for any request with no match, with `Method` as `NONE` and `DeviceId` as `0-0-0-0`. `match_single` only takes the `User-Agent`, so it gives those empty values over the limit whatever other headers are sent. No VCL function raises the limit.
+
 ### Passing values to the backend
 
 A header set on `req` in `vcl_recv` goes to the backend along with the request, as the header from `match_all` above does. Set it on `resp` in `vcl_deliver` to send it to the client.
