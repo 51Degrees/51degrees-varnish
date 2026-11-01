@@ -38,9 +38,9 @@ shell {
 		"${vmod_topsrc}/examples/ipi/gettingStarted.vcl" > "${tmpdir}/example.vcl"
 }
 
-varnish v1 -arg "-p vmod_path=${vmod_topbuild}/src/dd/.libs:${vmod_topbuild}/src/ipi/.libs" -vcl+backend {} -start
-varnish v1 -cliok "vcl.load example ${tmpdir}/example.vcl"
-varnish v1 -cliok "vcl.use example"
+${vcache} v1 -arg "-p vmod_path=${vmod_topbuild}/src/dd/.libs:${vmod_topbuild}/src/ipi/.libs" -vcl+backend {} -start
+${vcache} v1 -cliok "vcl.load example ${tmpdir}/example.vcl"
+${vcache} v1 -cliok "vcl.use example"
 
 client c1 {
 	txreq -hdr "X-Real-IP: 212.58.224.22"
@@ -50,4 +50,4 @@ client c1 {
 	expect resp.http.x-asn ~ {^\\".+\\":[0-9.]+$}
 } -run
 
-varnish v1 -cliexpect "Child has not panicked" "panic.show"
+${vcache} v1 -cliexpect "Child has not panicked" "panic.show"

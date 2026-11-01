@@ -57,10 +57,39 @@ AS_VAR_IF([$1], [""], [$5], [$4])dnl
 ])# PKG_CHECK_VAR
 ])
 
+# Varnish Cache installs varnishapi.pc and Vinyl Cache installs vinylapi.pc.
+# Varnish Cache is used if both are installed, unless --with-vcache picks one,
+# the option the Vinyl Cache build macros use.
+PKG_PROG_PKG_CONFIG
+AC_ARG_WITH([vcache],
+	AS_HELP_STRING([--with-vcache=varnish|vinyl], [The project to build the modules for. By default this is Varnish Cache if it is installed, and Vinyl Cache otherwise.]),
+	[vcache=$withval],
+	[PKG_CHECK_EXISTS([varnishapi], [vcache=varnish], [vcache=vinyl])])
+case "$vcache" in
+	varnish)
+		vcacheapi=varnishapi
+		vcached=varnishd
+		vcachetest=varnishtest
+		;;
+	vinyl)
+		vcacheapi=vinylapi
+		vcached=vinyld
+		vcachetest=vinyltest
+		;;
+	*)
+		AC_MSG_ERROR([--with-vcache must be varnish or vinyl.])
+		;;
+esac
+AC_MSG_NOTICE([Building for $vcacheapi])
+
+# The test command which starts an instance has the project's name.
+AC_SUBST([VCACHE], [$vcache])
+
 # Check for Varnish directories
-PKG_CHECK_VAR([LIBVARNISHAPI_DATAROOTDIR], [varnishapi], [datarootdir])
-PKG_CHECK_VAR([LIBVARNISHAPI_BINDIR], [varnishapi], [bindir])
-PKG_CHECK_VAR([LIBVARNISHAPI_SBINDIR], [varnishapi], [sbindir])
+PKG_CHECK_VAR([LIBVARNISHAPI_DATAROOTDIR], [$vcacheapi], [datarootdir])
+PKG_CHECK_VAR([LIBVARNISHAPI_BINDIR], [$vcacheapi], [bindir])
+PKG_CHECK_VAR([LIBVARNISHAPI_SBINDIR], [$vcacheapi], [sbindir])
+PKG_CHECK_VAR([LIBVARNISHAPI_PKGINCLUDEDIR], [$vcacheapi], [pkgincludedir])
 AC_SUBST([LIBVARNISHAPI_DATAROOTDIR])
 
 # Define the build configuration
@@ -118,12 +147,12 @@ AC_ARG_WITH([version],
 if test "x$varnishversion" = x; then
 	# Set the version and the source directory using the installed
 	# Varnish
-	PKG_CHECK_MODULES([libvarnishapi], [varnishapi]);
-	AC_PATH_PROG([VARNISHD], [varnishd], [],
+	PKG_CHECK_MODULES([libvarnishapi], [$vcacheapi]);
+	AC_PATH_PROG([VARNISHD], [$vcached], [],
     	[$LIBVARNISHAPI_SBINDIR:$LIBVARNISHAPI_BINDIR:$PATH])
 	varnishversion=`$VARNISHD -V 2>&1 | tr ' ' '\n' | $EGREP -o '@<:@0-9@:>@+\.@<:@0-9@:>@+\.@<:@0-9@:>@+'`
 	if test  ! -d "${VARNISHSRC}"; then
-		VARNISHSRC=/usr/local/include/varnish
+		VARNISHSRC=$LIBVARNISHAPI_PKGINCLUDEDIR
 	fi
 else
 	# Check for wget
@@ -151,13 +180,13 @@ fi
 # Where modules are installed, and the tool which writes a module's interface
 # from its .vcc file. Varnish 9.1 has no VARNISH_VMOD_DIR or VARNISH_VMODTOOL
 # macros, so these are read from pkg-config.
-PKG_CHECK_VAR([VMOD_DIR], [varnishapi], [vmoddir], [],
-	[AC_MSG_ERROR([varnishapi gives no vmoddir.])])
-PKG_CHECK_VAR([VMODTOOL], [varnishapi], [vmodtool], [],
-	[AC_MSG_ERROR([varnishapi gives no vmodtool.])])
+PKG_CHECK_VAR([VMOD_DIR], [$vcacheapi], [vmoddir], [],
+	[AC_MSG_ERROR([$vcacheapi gives no vmoddir.])])
+PKG_CHECK_VAR([VMODTOOL], [$vcacheapi], [vmodtool], [],
+	[AC_MSG_ERROR([$vcacheapi gives no vmodtool.])])
 
 # Get the Varnish executable path
-AC_PATH_PROG([VARNISHTEST], [varnishtest], [],
+AC_PATH_PROG([VARNISHTEST], [$vcachetest], [],
     [$VARNISHSRC/bin/varnishtest:$LIBVARNISHAPI_BINDIR:$LIBVARNISHAPI_SBINDIR:$PATH])
 
 # Set the compile arguments.

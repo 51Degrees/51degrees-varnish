@@ -77,7 +77,7 @@ VMOD_TESTS = $(top_srcdir)/src/dd/tests/*.vtc
 .PHONY: $(VMOD_TESTS)
 
 $(top_srcdir)/src/dd/tests/*.vtc: libvmod_fiftyonedegrees.la
-	@VARNISHTEST@ -Dvarnishd=@VARNISHD@ -Dvmod_fod_datafile=$(datafile) -Dvmod_topbuild=$(abs_top_builddir) $@ $(testargs) \
+	@VARNISHTEST@ -Dvarnishd=@VARNISHD@ -Dvcache=@VCACHE@ -Dvmod_fod_datafile=$(datafile) -Dvmod_topbuild=$(abs_top_builddir) $@ $(testargs) \
 	|| EC=$$?; if [ "$$EC" != "77" ] ; then (exit $$EC) ; fi;
 
 check: $(VMOD_TESTS)

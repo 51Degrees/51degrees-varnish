@@ -42,6 +42,16 @@
   },
   {
     "Image": "ubuntu-24.04",
+    "Name": "ubuntu-24.04_Vinyl9.0.2",
+    "VinylVersion": "9.0.2"
+  },
+  {
+    "Image": "ubuntu-24.04",
+    "Name": "ubuntu-24.04_Vinyl9.1.0",
+    "VinylVersion": "9.1.0"
+  },
+  {
+    "Image": "ubuntu-24.04",
     "Name": "ubuntu-24.04_Varnish9.1.0_MemCheck",
     "VarnishVersion": "9.1.0",
     "MemCheck": true

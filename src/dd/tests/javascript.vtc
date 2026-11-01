@@ -30,7 +30,7 @@ server s1 -repeat 20 {
 	txresp
 } -start
 
-varnish v1 -vcl+backend {
+${vcache} v1 -vcl+backend {
 	import fiftyonedegrees from "${vmod_topbuild}/src/dd/.libs/libvmod_fiftyonedegrees.so";
 
 	sub vcl_init {
@@ -79,4 +79,4 @@ client c1 {
 	expect resp.body == "/* 51Degrees Javascript not available. */"
 } -run
 
-varnish v1 -cliexpect "Child has not panicked" "panic.show"
+${vcache} v1 -cliexpect "Child has not panicked" "panic.show"
