@@ -10,7 +10,7 @@ The project contains source code for the Varnish integration of 51Degrees' on-pr
 
 The modules are tested on Varnish Cache 6.0.18, 9.0.4 and 9.1.0, the releases the Varnish Cache project supports, as listed on its [releases page](https://www.varnish.org/releases/index.html). They are also tested on Vinyl Cache 9.0.2 and 9.1.0, which the Vinyl Cache project supports, as listed on its [releases page](https://vinyl-cache.org/releases/).
 
-Known issue: on Varnish Cache 9.1.0 and Vinyl Cache 9.1.0, a request hangs if `vcl_synth` sets `resp.body` from more than 16 parts, counting each string and each function result joined with `+`. The client hints example uses 13.
+Known issue: on Varnish Cache 9.1.0 and Vinyl Cache 9.1.0, a request hangs if `vcl_synth` sets `resp.body` from more than 16 parts. Each value joined with `+` is a part, except that the strings at the start of the expression count as one part and empty values do not count. The client hints example uses 13.
 
 ## Pre-requisites
 
