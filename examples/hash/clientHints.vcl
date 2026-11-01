@@ -18,9 +18,7 @@ Expected output:
 User Agent Client Hints Example
 Select the Make second request button below, to use User Agent Client Hint headers in evidence for device detections.
 ...
-Browser Vendor: Google
-Browser Name: Chrome
-Browser Version: 91
+Browser: Google,Chrome,91
 ...
 ```
 
@@ -53,6 +51,9 @@ sub vcl_synth {
         set resp.status = 200;
         set resp.http.Content-Type = "text/html; charset=utf-8";
 
+		// Varnish Cache 9.1.0 and Vinyl Cache 9.1.0 never finish a request
+		// whose body is joined from more than 16 parts, so the platform and
+		// the browser are one call each.
 		set resp.body = {"
 <h2>User Agent Client Hints Example</h2>
 
@@ -132,12 +133,8 @@ sub vcl_synth {
 		Hardware Vendor: "} + fiftyonedegrees.match_all("HardwareVendor") + {"<br />
 		Hardware Name: "} + fiftyonedegrees.match_all("HardwareName") + {"<br />
 		Device Type: "} + fiftyonedegrees.match_all("DeviceType") + {"<br />
-		Platform Vendor: "} + fiftyonedegrees.match_all("PlatformVendor") + {"<br />
-		Platform Name: "} + fiftyonedegrees.match_all("PlatformName") + {"<br />
-		Platform Version: "} + fiftyonedegrees.match_all("PlatformVersion") + {"<br />
-		Browser Vendor: "} + fiftyonedegrees.match_all("BrowserVendor") + {"<br />
-		Browser Name: "} + fiftyonedegrees.match_all("BrowserName") + {"<br />
-		Browser Version: "} + fiftyonedegrees.match_all("BrowserVersion") + {"
+		Platform: "} + fiftyonedegrees.match_all("PlatformVendor,PlatformName,PlatformVersion") + {"<br />
+		Browser: "} + fiftyonedegrees.match_all("BrowserVendor,BrowserName,BrowserVersion") + {"
     </p>
 </div>"};
         return (deliver);
