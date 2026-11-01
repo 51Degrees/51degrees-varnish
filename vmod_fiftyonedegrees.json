@@ -1,6 +1,6 @@
 {
     "name": "fiftyonedegrees",
-    "date": "2020-07-15",
+    "date": "2026-11-01",
     "desc": "51Degrees Device Detection",
     "license": "EUPL",
     "status": "mature",
@@ -14,8 +14,8 @@
         "doc_path": "src/dd/vmod_fiftyonedegrees.rst",
         "branches": {
             "6.0": "main",
-            "7.7": "main",
-            "8.0": "main"
+            "9.0": "main",
+            "9.1": "main"
         }
     }
 }

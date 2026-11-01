@@ -1,8 +1,12 @@
 param(
     [string]$Name = "integration",
-    [bool]$MemCheck = $False
+    [bool]$MemCheck = $False,
+    [string]$VinylVersion
 )
 $ErrorActionPreference = "Stop"
+
+# Vinyl Cache's program has its own name.
+$Daemon = $VinylVersion ? "vinyld" : "varnishd"
 
 # A library built with the address sanitizer only loads through make mem-check,
 # which the unit tests have already run.
@@ -27,7 +31,7 @@ $work = New-Item -ItemType Directory -Force -Path "$repo/test-results/browser"
 $vcl = "$work/javascript.vcl"
 (Get-Content -Raw "$repo/examples/hash/jsExample/javascript.vcl").Replace(
     "/etc/varnish/51Degrees-LiteV4.1.hash", "$assets/TAC-HashV41.hash") | Set-Content $vcl
-varnishd -n "$work/varnish" -P "$work/varnish.pid" -a 127.0.0.1:8888 -f $vcl -p "vmod_path=$build/src/dd/.libs"
+& $Daemon -n "$work/varnish" -P "$work/varnish.pid" -a 127.0.0.1:8888 -f $vcl -p "vmod_path=$build/src/dd/.libs"
 if ($LASTEXITCODE -ne 0) {
     Write-Output "::warning::Varnish did not start for the browser test"
 } else {
@@ -45,7 +49,7 @@ if ($LASTEXITCODE -ne 0) {
     } finally {
         Pop-Location
         Stop-Process -InputObject $page
-        # varnishd holds a lock on the file which .NET will not read past.
+        # The daemon holds a lock on the file which .NET will not read past.
         sh -c "kill `$(cat '$work/varnish.pid')"
     }
 }

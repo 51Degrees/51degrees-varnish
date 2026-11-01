@@ -27,7 +27,7 @@ server s1 -repeat 20 {
 	txresp
 } -start
 
-varnish v1 -vcl+backend {
+${vcache} v1 -vcl+backend {
 	import fiftyonedegrees_ipi from "${vmod_topbuild}/src/ipi/.libs/libvmod_fiftyonedegrees_ipi.so";
 
 	sub vcl_init {

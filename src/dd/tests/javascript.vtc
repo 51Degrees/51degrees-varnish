@@ -30,7 +30,7 @@ server s1 -repeat 20 {
 	txresp
 } -start
 
-varnish v1 -vcl+backend {
+${vcache} v1 -vcl+backend {
 	import fiftyonedegrees from "${vmod_topbuild}/src/dd/.libs/libvmod_fiftyonedegrees.so";
 
 	sub vcl_init {
@@ -42,16 +42,16 @@ varnish v1 -vcl+backend {
 	sub vcl_synth {
 		set resp.http.Content-Type = "application/x-javascript";
 		if (req.url == "/all.js") {
-			synthetic(fiftyonedegrees.get_javascript_all("ScreenPixelsWidthJavascript"));
+			set resp.body = fiftyonedegrees.get_javascript_all("ScreenPixelsWidthJavascript");
 		}
 		else if (req.url == "/single.js") {
-			synthetic(fiftyonedegrees.get_javascript_single(req.http.user-agent, "ScreenPixelsWidthJavascript"));
+			set resp.body = fiftyonedegrees.get_javascript_single(req.http.user-agent, "ScreenPixelsWidthJavascript");
 		}
 		else if (req.url == "/no-agent.js") {
-			synthetic(fiftyonedegrees.get_javascript_single(req.http.not-sent, "ScreenPixelsWidthJavascript"));
+			set resp.body = fiftyonedegrees.get_javascript_single(req.http.not-sent, "ScreenPixelsWidthJavascript");
 		}
 		else if (req.url == "/not-a-property.js") {
-			synthetic(fiftyonedegrees.get_javascript_single(req.http.user-agent, "thisisnotarealpropertyname"));
+			set resp.body = fiftyonedegrees.get_javascript_single(req.http.user-agent, "thisisnotarealpropertyname");
 		}
 		return (deliver);
 	}
@@ -79,4 +79,4 @@ client c1 {
 	expect resp.body == "/* 51Degrees Javascript not available. */"
 } -run
 
-varnish v1 -cliexpect "Child has not panicked" "panic.show"
+${vcache} v1 -cliexpect "Child has not panicked" "panic.show"

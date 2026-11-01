@@ -108,7 +108,7 @@ Return value
 Description
 	Gets the JavaScript in a property, using the same evidence as
 	match_all, for serving to a browser so that it can send back further
-	evidence. Use it in vcl_synth with the synthetic function. If the
+	evidence. Use it in vcl_synth to set resp.body. If the
 	property is not available, or the value does not fit in the workspace,
 	a JavaScript comment is returned, so a page loading it does not get a
 	syntax error. A value which does not fit is logged, and needs a larger
@@ -124,7 +124,7 @@ Example
 		sub vcl_synth {
 			if (req.url == "/51D.js") {
 				set resp.http.Content-Type = "application/x-javascript";
-				synthetic(fiftyonedegrees.get_javascript_all("JavascriptHardwareProfile"));
+				set resp.body = fiftyonedegrees.get_javascript_all("JavascriptHardwareProfile");
 				return (deliver);
 			}
 		}
@@ -139,7 +139,7 @@ Description
 Example
 	::
 
-		synthetic(fiftyonedegrees.get_javascript_single(req.http.user-agent, "ScreenPixelsWidthJavascript"));
+		set resp.body = fiftyonedegrees.get_javascript_single(req.http.user-agent, "ScreenPixelsWidthJavascript");
 
 $Function STRING evidence_used()
 

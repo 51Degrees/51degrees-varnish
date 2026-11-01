@@ -4,6 +4,7 @@ SUBDIRS = src/dd src/ipi
 
 DISTCHECK_CONFIGURE_FLAGS = \
 	--with-config=test \
+	--with-vcache=@VCACHE@ \
 	--with-datafile=@FIFTYONEDEGREES_DATAFILE_ABSOLUTE@ \
 	--with-datafile-ipi=@FIFTYONEDEGREES_DATAFILE_IPI_ABSOLUTE@ \
 	VMOD_DIR='$${libdir}/varnish/vmods'
@@ -39,7 +40,7 @@ EXAMPLE_TESTS = $(top_srcdir)/tests/examples/*.vtc
 .PHONY: $(EXAMPLE_TESTS)
 
 $(top_srcdir)/tests/examples/*.vtc:
-	@VARNISHTEST@ -Dvarnishd=@VARNISHD@ -Dvmod_ipi_datafile=$(datafile_ipi) -Dvmod_fod_datafile=$(datafile) -Dvmod_topbuild=$(abs_top_builddir) -Dvmod_topsrc=$(abs_top_srcdir) $@ \
+	@VARNISHTEST@ -Dvarnishd=@VARNISHD@ -Dvcache=@VCACHE@ -Dvmod_ipi_datafile=$(datafile_ipi) -Dvmod_fod_datafile=$(datafile) -Dvmod_topbuild=$(abs_top_builddir) -Dvmod_topsrc=$(abs_top_srcdir) $@ \
 	|| EC=$$?; if [ "$$EC" != "77" ] ; then (exit $$EC) ; fi;
 
 # Runs each example, so what the examples show stays true.

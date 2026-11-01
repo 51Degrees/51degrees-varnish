@@ -1,47 +1,47 @@
 [
   {
     "Image": "ubuntu-24.04",
-    "Name": "ubuntu-24.04_Varnish6.0.6",
-    "VarnishVersion": "6.0.6"
-  },
-  {
-    "Image": "ubuntu-24.04",
-    "Name": "ubuntu-24.04_Varnish6.0.8",
-    "VarnishVersion": "6.0.8"
-  },
-  {
-    "Image": "ubuntu-24.04",
-    "Name": "ubuntu-24.04_Varnish6.0.17",
-    "VarnishVersion": "6.0.17",
+    "Name": "ubuntu-24.04_Varnish6.0.18",
+    "VarnishVersion": "6.0.18",
     "PackageRequirement": true
   },
   {
     "Image": "ubuntu-24.04",
-    "Name": "ubuntu-24.04_Varnish7.7.3",
-    "VarnishVersion": "7.7.3"
+    "Name": "ubuntu-24.04_Varnish9.0.4",
+    "VarnishVersion": "9.0.4"
   },
   {
     "Image": "ubuntu-24.04",
-    "Name": "ubuntu-24.04_Varnish8.0.1",
-    "VarnishVersion": "8.0.1"
+    "Name": "ubuntu-24.04_Varnish9.1.0",
+    "VarnishVersion": "9.1.0"
   },
   {
     "Image": "ubuntu-24.04",
-    "Name": "ubuntu-24.04_Varnish8.0.1_MemCheck",
-    "VarnishVersion": "8.0.1",
+    "Name": "ubuntu-24.04_Vinyl9.0.2",
+    "VinylVersion": "9.0.2"
+  },
+  {
+    "Image": "ubuntu-24.04",
+    "Name": "ubuntu-24.04_Vinyl9.1.0",
+    "VinylVersion": "9.1.0"
+  },
+  {
+    "Image": "ubuntu-24.04",
+    "Name": "ubuntu-24.04_Varnish9.1.0_MemCheck",
+    "VarnishVersion": "9.1.0",
     "MemCheck": true
   },
   {
     "Image": "ubuntu-24.04",
     "Name": "ubuntu_DD",
-    "VarnishVersion": "8.0.1",
+    "VarnishVersion": "9.1.0",
     "RunPerformance": true,
     "PackageRequirement": true
   },
   {
     "Image": "ubuntu-24.04",
     "Name": "ubuntu_IPI",
-    "VarnishVersion": "8.0.1",
+    "VarnishVersion": "9.1.0",
     "RunPerformance": true,
     "PackageRequirement": true
   }

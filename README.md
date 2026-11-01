@@ -8,7 +8,9 @@
 
 The project contains source code for the Varnish integration of 51Degrees' on-premise Device Detection and IP Intelligence engines, as two modules that can be used together or on their own. The `fiftyonedegrees` module provides device detection, and the `fiftyonedegrees_ipi` module provides [IP Intelligence](#ip-intelligence).
 
-The module is supported for Varnish 6.0 (LTS), 7.7 and 8.0, and is tested on 6.0.6, 6.0.8, 6.0.17, 7.7.3 and 8.0.1.
+The modules are tested on Varnish Cache 6.0.18, 9.0.4 and 9.1.0, the releases the Varnish Cache project supports, as listed on its [releases page](https://www.varnish.org/releases/index.html). They are also tested on Vinyl Cache 9.0.2 and 9.1.0, which the Vinyl Cache project supports, as listed on its [releases page](https://vinyl-cache.org/releases/).
+
+Known issue: on Varnish Cache 9.1.0 and Vinyl Cache 9.1.0, a request hangs if `vcl_synth` sets `resp.body` from more than 16 parts. Each value joined with `+` is a part, except that the strings at the start of the expression count as one part and empty values do not count. The client hints example uses 13.
 
 ## Pre-requisites
 
@@ -49,7 +51,7 @@ Move to the Varnish directory with
 $ cd 51degrees-varnish
 ```
 
-and install the module with (**NOTE**: if Varnish source was installed using the package manager, its' files will be located under `/usr/include/varnish` directory rather than `/usr/local/include/varnish`. The environment variable `VARNISHSRC` will need to be set to point to this location for the installation to succeed).
+and install the module with
 
 ```
 $ ./autogen.sh
@@ -67,9 +69,11 @@ Where `--with-config`  [optional] sets the version that will be built. `release`
 
 `--with-datafile-ipi` [optional] sets the IP Intelligence data file used by the unit tests.
 
+`--with-vcache` [optional] sets the project the modules are built for, `varnish` for Varnish Cache or `vinyl` for Vinyl Cache. By default this is Varnish Cache if it is installed, and Vinyl Cache otherwise.
+
 The data files used by the tests can also be set when they are run, with `make check 51DEGREES_DD_PATH=/path/to/file 51DEGREES_IPI_PATH=/path/to/file`.
 
-When varnish is installed in a non standard directory, please set the value of environment variable `VARNISHSRC` to point to where the varnish source resides before running the `configure` (e.g. ``export VARNISHSRC=/usr/include/varnish``).
+`configure` finds the Varnish headers through pkg-config. To use headers from another folder, set the environment variable `VARNISHSRC` to that folder before running `configure` (for example `export VARNISHSRC=/usr/include/varnish`).
 
 The location of where the module will be installed can also be customised by setting the environment variable `VMOD_DIR` before running the `configure`.
 
@@ -267,7 +271,7 @@ sub vcl_recv {
 sub vcl_synth {
 	if (req.url == "/51D.js") {
 		set resp.http.Content-Type = "application/x-javascript";
-		synthetic(fiftyonedegrees.get_javascript_all("ScreenPixelsWidthJavascript"));
+		set resp.body = fiftyonedegrees.get_javascript_all("ScreenPixelsWidthJavascript");
 		return (deliver);
 	}
 }
