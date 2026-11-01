@@ -42,16 +42,16 @@ varnish v1 -vcl+backend {
 	sub vcl_synth {
 		set resp.http.Content-Type = "application/x-javascript";
 		if (req.url == "/all.js") {
-			synthetic(fiftyonedegrees.get_javascript_all("ScreenPixelsWidthJavascript"));
+			set resp.body = fiftyonedegrees.get_javascript_all("ScreenPixelsWidthJavascript");
 		}
 		else if (req.url == "/single.js") {
-			synthetic(fiftyonedegrees.get_javascript_single(req.http.user-agent, "ScreenPixelsWidthJavascript"));
+			set resp.body = fiftyonedegrees.get_javascript_single(req.http.user-agent, "ScreenPixelsWidthJavascript");
 		}
 		else if (req.url == "/no-agent.js") {
-			synthetic(fiftyonedegrees.get_javascript_single(req.http.not-sent, "ScreenPixelsWidthJavascript"));
+			set resp.body = fiftyonedegrees.get_javascript_single(req.http.not-sent, "ScreenPixelsWidthJavascript");
 		}
 		else if (req.url == "/not-a-property.js") {
-			synthetic(fiftyonedegrees.get_javascript_single(req.http.user-agent, "thisisnotarealpropertyname"));
+			set resp.body = fiftyonedegrees.get_javascript_single(req.http.user-agent, "thisisnotarealpropertyname");
 		}
 		return (deliver);
 	}

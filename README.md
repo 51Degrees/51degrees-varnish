@@ -8,7 +8,7 @@
 
 The project contains source code for the Varnish integration of 51Degrees' on-premise Device Detection and IP Intelligence engines, as two modules that can be used together or on their own. The `fiftyonedegrees` module provides device detection, and the `fiftyonedegrees_ipi` module provides [IP Intelligence](#ip-intelligence).
 
-The module is supported for Varnish 6.0 (LTS), 7.7 and 8.0, and is tested on 6.0.6, 6.0.8, 6.0.17, 7.7.3 and 8.0.1.
+The modules are tested on Varnish Cache 6.0.6, 6.0.8, 6.0.17, 6.0.18, 7.7.3, 8.0.1, 9.0.4 and 9.1.0. Of these, 6.0.18, 9.0.4 and 9.1.0 are the releases the Varnish Cache project supports, as listed on its [releases page](https://www.varnish.org/releases/index.html).
 
 ## Pre-requisites
 
@@ -267,7 +267,7 @@ sub vcl_recv {
 sub vcl_synth {
 	if (req.url == "/51D.js") {
 		set resp.http.Content-Type = "application/x-javascript";
-		synthetic(fiftyonedegrees.get_javascript_all("ScreenPixelsWidthJavascript"));
+		set resp.body = fiftyonedegrees.get_javascript_all("ScreenPixelsWidthJavascript");
 		return (deliver);
 	}
 }

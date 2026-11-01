@@ -148,9 +148,13 @@ else
 	    [$VARNISHSRC/bin/varnishd:$LIBVARNISHAPI_SBINDIR:$LIBVARNISHAPI_BINDIR:$PATH])
 fi
 
-# Varnish include files tree
-VARNISH_VMOD_DIR
-VARNISH_VMODTOOL
+# Where modules are installed, and the tool which writes a module's interface
+# from its .vcc file. Varnish 9.1 has no VARNISH_VMOD_DIR or VARNISH_VMODTOOL
+# macros, so these are read from pkg-config.
+PKG_CHECK_VAR([VMOD_DIR], [varnishapi], [vmoddir], [],
+	[AC_MSG_ERROR([varnishapi gives no vmoddir.])])
+PKG_CHECK_VAR([VMODTOOL], [varnishapi], [vmodtool], [],
+	[AC_MSG_ERROR([varnishapi gives no vmodtool.])])
 
 # Get the Varnish executable path
 AC_PATH_PROG([VARNISHTEST], [varnishtest], [],

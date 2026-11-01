@@ -17,6 +17,11 @@
   },
   {
     "Image": "ubuntu-24.04",
+    "Name": "ubuntu-24.04_Varnish6.0.18",
+    "VarnishVersion": "6.0.18"
+  },
+  {
+    "Image": "ubuntu-24.04",
     "Name": "ubuntu-24.04_Varnish7.7.3",
     "VarnishVersion": "7.7.3"
   },
@@ -27,21 +32,31 @@
   },
   {
     "Image": "ubuntu-24.04",
-    "Name": "ubuntu-24.04_Varnish8.0.1_MemCheck",
-    "VarnishVersion": "8.0.1",
+    "Name": "ubuntu-24.04_Varnish9.0.4",
+    "VarnishVersion": "9.0.4"
+  },
+  {
+    "Image": "ubuntu-24.04",
+    "Name": "ubuntu-24.04_Varnish9.1.0",
+    "VarnishVersion": "9.1.0"
+  },
+  {
+    "Image": "ubuntu-24.04",
+    "Name": "ubuntu-24.04_Varnish9.1.0_MemCheck",
+    "VarnishVersion": "9.1.0",
     "MemCheck": true
   },
   {
     "Image": "ubuntu-24.04",
     "Name": "ubuntu_DD",
-    "VarnishVersion": "8.0.1",
+    "VarnishVersion": "9.1.0",
     "RunPerformance": true,
     "PackageRequirement": true
   },
   {
     "Image": "ubuntu-24.04",
     "Name": "ubuntu_IPI",
-    "VarnishVersion": "8.0.1",
+    "VarnishVersion": "9.1.0",
     "RunPerformance": true,
     "PackageRequirement": true
   }

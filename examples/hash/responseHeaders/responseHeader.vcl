@@ -30,13 +30,13 @@ sub vcl_recv {
 sub vcl_synth {
 	fiftyonedegrees.set_resp_headers();
 	set resp.http.Content-Type = "text/html";
-	synthetic("<html><body><ul>" +
+	set resp.body = "<html><body><ul>" +
 		"<li>Hardware vendor: " + fiftyonedegrees.match_all("HardwareVendor") + "</li>" +
 		"<li>Hardware name: " + fiftyonedegrees.match_all("HardwareName") + "</li>" +
 		"<li>Device type: " + fiftyonedegrees.match_all("DeviceType") + "</li>" +
 		"<li>Platform: " + fiftyonedegrees.match_all("PlatformVendor,PlatformName,PlatformVersion") + "</li>" +
 		"<li>Browser: " + fiftyonedegrees.match_all("BrowserVendor,BrowserName,BrowserVersion") + "</li>" +
-		"</ul></body></html>");
+		"</ul></body></html>";
 	return (deliver);
 }
 

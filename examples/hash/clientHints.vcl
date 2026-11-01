@@ -53,7 +53,7 @@ sub vcl_synth {
         set resp.status = 200;
         set resp.http.Content-Type = "text/html; charset=utf-8";
 
-		synthetic({"
+		set resp.body = {"
 <h2>User Agent Client Hints Example</h2>
 
 <p>
@@ -139,7 +139,7 @@ sub vcl_synth {
 		Browser Name: "} + fiftyonedegrees.match_all("BrowserName") + {"<br />
 		Browser Version: "} + fiftyonedegrees.match_all("BrowserVersion") + {"
     </p>
-</div>"});
+</div>"};
         return (deliver);
     }
 }

@@ -31,7 +31,7 @@ sub vcl_recv {
 sub vcl_synth {
 	if (req.url ~ "^/51D\.js") {
 		set resp.http.Content-Type = "application/x-javascript";
-		synthetic(fiftyonedegrees.get_javascript_single(req.http.user-agent, "ScreenPixelsWidthJavascript"));
+		set resp.body = fiftyonedegrees.get_javascript_single(req.http.user-agent, "ScreenPixelsWidthJavascript");
 		return (deliver);
 	}
 	if (req.url ~ "^/overrides") {

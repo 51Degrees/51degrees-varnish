@@ -34,8 +34,9 @@
 /**
  * @file
  * Differences between the versions of Varnish the modules build against, kept
- * in one place. VRT_MAJOR_VERSION is 7 for Varnish 6.0, 21 for 7.7 and 22 for
- * 8.0. Include this after cache/cache.h and vcc_if.h.
+ * in one place. VRT_MAJOR_VERSION is 7 for Varnish 6.0, 21 for 7.7, 22 for 8.0
+ * and 9.1, and 23 for 9.0, so a newer release does not always have a higher
+ * number. Include this after cache/cache.h and vcc_if.h.
  */
 
 /**
