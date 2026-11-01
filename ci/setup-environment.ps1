@@ -1,5 +1,5 @@
 param(
-    [string]$VarnishVersion = "6.0.17",
+    [string]$VarnishVersion = "6.0.18",
     [string]$VinylVersion
 )
 $ErrorActionPreference = "Stop"
@@ -20,17 +20,10 @@ if ($VinylVersion) {
     $Project = "Varnish"
     $Version = $VarnishVersion
     $Daemon = "varnishd"
-    # Where each version's source is published, with its SHA256. Releases from
-    # 6.0.17 and 8.0.1 onwards are GitHub releases, which show the SHA256 of
-    # each file. Older ones are on varnish.org, with their SHA256 on
-    # vinyl-cache.org's release pages.
+    # Each version's source is a GitHub release, which shows the SHA256 of each
+    # file.
     $Sources = @{
-        "6.0.6" = "https://www.varnish.org/downloads/varnish-6.0.6.tgz", "298476eaea36109845a7640fa578bf8a8a04124d2f1c9bc75e1d6ae2bd760b4a"
-        "6.0.8" = "https://www.varnish.org/downloads/varnish-6.0.8.tgz", "5dd245b02840b9cd7ef8b10665d8172ef902dcc006f54f2c6801cbd71d1c68fe"
-        "6.0.17" = "https://github.com/varnish/varnish/releases/download/varnish-6.0.17/varnish-6.0.17.tar.gz", "4530c81a91e9320d0b3a703f549765f530c870cf716917de31c9d62a9495079d"
         "6.0.18" = "https://github.com/varnish/varnish/releases/download/varnish-6.0.18/varnish-6.0.18.tar.gz", "4c3008d71544e3d0edc2aadc4fbd8d962aad700582544248030da2860131e514"
-        "7.7.3" = "https://www.varnish.org/downloads/varnish-7.7.3.tgz", "e96eeafc4cfe2a558ed2fb54f1e22be3a3d995f46f8c00da545d583aaef80236"
-        "8.0.1" = "https://github.com/varnish/varnish/releases/download/varnish-8.0.1/varnish-8.0.1.tar.gz", "04d1fa28d02080abb96b783062d30f4dd4ddf667ea93a0f0d37725d1301d7ea1"
         "9.0.4" = "https://github.com/varnish/varnish/releases/download/varnish-9.0.4/varnish-9.0.4.tar.gz", "766e91abf4d9ca7f00a88e105bc61109f1145983c09116db4228c9067fa2adc3"
         "9.1.0" = "https://github.com/varnish/varnish/releases/download/varnish-9.1.0/varnish-9.1.0.tar.gz", "fe615fa024c801d12928e7eea0e822ba93ab625a585841143c36ae02d5bcc37a"
     }

@@ -22,6 +22,6 @@ The additional build options for this repository are:
 
 | Option | Type | Default | Purpose |
 | ------ | ---- | ------- | ------- |
-| `VarnishVersion` | string | `6.0.17` | The version of Varnish to build from source and test against. |
+| `VarnishVersion` | string | `6.0.18` | The version of Varnish to build from source and test against. |
 | `VinylVersion` | string | none | If set, the version of Vinyl Cache to build from source and test against, in place of Varnish Cache. |
 | `MemCheck` | bool | `false` | If true, the unit tests run through `make mem-check`, with the modules built with the address sanitizer. |

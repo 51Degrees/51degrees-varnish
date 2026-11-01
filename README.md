@@ -8,7 +8,7 @@
 
 The project contains source code for the Varnish integration of 51Degrees' on-premise Device Detection and IP Intelligence engines, as two modules that can be used together or on their own. The `fiftyonedegrees` module provides device detection, and the `fiftyonedegrees_ipi` module provides [IP Intelligence](#ip-intelligence).
 
-The modules are tested on Varnish Cache 6.0.6, 6.0.8, 6.0.17, 6.0.18, 7.7.3, 8.0.1, 9.0.4 and 9.1.0. Of these, 6.0.18, 9.0.4 and 9.1.0 are the releases the Varnish Cache project supports, as listed on its [releases page](https://www.varnish.org/releases/index.html). They are also tested on Vinyl Cache 9.0.2 and 9.1.0, which the Vinyl Cache project supports, as listed on its [releases page](https://vinyl-cache.org/releases/).
+The modules are tested on Varnish Cache 6.0.18, 9.0.4 and 9.1.0, the releases the Varnish Cache project supports, as listed on its [releases page](https://www.varnish.org/releases/index.html). They are also tested on Vinyl Cache 9.0.2 and 9.1.0, which the Vinyl Cache project supports, as listed on its [releases page](https://vinyl-cache.org/releases/).
 
 Known issue: on Varnish Cache 9.1.0 and Vinyl Cache 9.1.0, a request hangs if `vcl_synth` sets `resp.body` from more than 16 parts, counting each string and each function result joined with `+`. The client hints example uses 13.
 
