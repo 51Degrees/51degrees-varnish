@@ -837,6 +837,39 @@ static unsigned writeValue(
 }
 
 /**
+ * Method used to check whether the name is one of the match metrics, which
+ * are read from the results rather than from the properties of the data set.
+ * @param name the name to check
+ * @return true if the name is a match metric
+ */
+static bool isMatchMetric(const char *name) {
+	return StringCompare(name, "Iterations") == 0 ||
+		StringCompare(name, "Drift") == 0 ||
+		StringCompare(name, "Difference") == 0 ||
+		StringCompare(name, "Method") == 0 ||
+		StringCompare(name, "UserAgents") == 0 ||
+		StringCompare(name, "MatchedNodes") == 0;
+}
+
+/**
+ * Method used to walk every graph the results have not yet walked, so that
+ * the match metrics, which the walks set in the results, can be read. Unless
+ * the module was started with its properties named, a graph is walked only
+ * when a property of its component is first read.
+ * @param results the match results
+ * @return true if no walk failed, otherwise false, with the failure logged
+ */
+static bool evaluateAll(ResultsHash *results) {
+	EXCEPTION_CREATE;
+	ResultsEvaluateAll(&results->b.b, exception);
+	if (EXCEPTION_FAILED) {
+		logExceptionMessage(exception);
+		return false;
+	}
+	return true;
+}
+
+/**
  * Write the values for the required property to the workspace memory.
  * @param results the results to get the values from
  * @param requiredPropertyName name of the required property
@@ -856,7 +889,13 @@ unsigned getValue(
 	char *currentPropertyName;
 	bool found = false;
 
-	if (StringCompare(requiredPropertyName, "Iterations") == 0)
+	if (isMatchMetric(requiredPropertyName) && evaluateAll(results) == false)
+	{
+		// The metrics are not known if a walk failed, so the value is empty.
+		snprintf(p, u, "%c", '\0');
+		v = 0;
+	}
+	else if (StringCompare(requiredPropertyName, "Iterations") == 0)
 	{
 		v = snprintf(p, u, "%d", results->items->iterations);
 	}
