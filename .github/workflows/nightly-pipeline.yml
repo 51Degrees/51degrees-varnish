@@ -6,6 +6,8 @@ on:
       dryrun:
         type: boolean
         default: false
+  schedule:
+    - cron: '0 2 * * *'
 
 jobs:
   SubmoduleUpdate:
