@@ -55,8 +55,8 @@ CONFIG_OPTION(bool)
 typedef struct vmodfod_setHeader_t {
 	const char *name; /**< Name of the header to set. */
 	size_t propertyCount; /**< Number of set header properties pointed to by propertyIndexes. */
-	int *propertyIndexes; /**< Indexes of the set header properties in the available properties
-							to get the header values from. */
+	int *propertyIndexes; /**< Indexes to read the set header properties with, to get the
+							header values from. */
 } vmodfod_setHeader;
 
 /**

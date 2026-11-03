@@ -89,6 +89,11 @@ ResultsHash *obtainResultsFromAvailableHeadersDecor(
 	ResultsHash *results = obtainResultsFromAvailableHeaders(ctx, exception);
 	if (results == NULL)
 		return results;
+	// Walk every graph first, as the walk of a graph sets the drift and
+	// difference of the result it is for, so a walk on a later read would
+	// replace the values set here.
+	if (globalTest.expectedDrift.set || globalTest.expectedDifference.set)
+		ResultsEvaluateAll(&results->b.b, exception);
 	// Modify drift and difference
 	if (globalTest.expectedDrift.set)
 		results->items->drift = globalTest.expectedDrift.value;
