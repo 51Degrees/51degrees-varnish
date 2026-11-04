@@ -12,6 +12,7 @@ The following secrets are required:
 - There are no packages for a package manager, so the output of a publish is a new tag and a release, with a source tarball attached.
 - Windows is not supported, as Varnish does not run there.
 - The performance configurations in `options.json` have stable names with no Ubuntu or Varnish version, `ubuntu_DD` for device detection and `ubuntu_IPI` for IP Intelligence, so that each graph keeps its history.
+- `select-options.ps1` leaves those two out of a pull request, as they build and test what the Varnish 9.1.0 entry does. They run when `rc` itself or the release pull request is built, which `.github/workflows/release-pull-request.yml` does on every entry.
 - There is no package update step, as there are no package dependencies.
 - The Varnish 6.0 builds need `libpcre3-dev`, which later Ubuntu releases may drop, so `options.json` names `ubuntu-24.04` rather than `ubuntu-latest`.
 - `setup-environment.ps1` builds Varnish from the source its publisher gives, and fails if the file's SHA256 is not the one published with it. A version added to `options.json` needs its address and SHA256 added there too.
