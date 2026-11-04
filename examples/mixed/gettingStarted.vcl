@@ -7,9 +7,10 @@ use both for the same request.
 This example is available in full on [GitHub](https://github.com/51Degrees/51degrees-varnish/blob/main/examples/mixed/gettingStarted.vcl).
 
 The example uses the Lite device detection data file and the ASN IP Intelligence
-data file, which come with the 51degrees-cxx submodule at
-`cxx/device-detection-data/51Degrees-LiteV4.1.hash` and
-`cxx/ip-intelligence-data/51Degrees-IPIV4AsnIpiV41.ipi`. The paths to the data
+data file. From the repository folder,
+`sh cxx/data/get-data-files.sh 51Degrees-LiteV4.1.hash 51Degrees-IPIV4AsnIpiV41.ipi`
+downloads them to `cxx/data/device-detection/51Degrees-LiteV4.1.hash` and
+`cxx/data/ip-intelligence/51Degrees-IPIV4AsnIpiV41.ipi`. The paths to the data
 files need to be updated before running the example.
 
 In a Linux environment, the following command:
