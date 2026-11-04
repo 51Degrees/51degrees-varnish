@@ -1,18 +1,54 @@
-# 51Degrees Real-Time Data Varnish Modules
+# 51Degrees Device Detection and IP Intelligence for Varnish
 
-![51Degrees](https://51degrees.com/img/logo.png?utm_source=github&utm_medium=readme&utm_campaign=51degrees-varnish&utm_content=readme.md&utm_term=51degrees-real-time-data-varnish-modules "Data rewards the curious") **Device Detection and IP Intelligence in C** Varnish modules
+<img src=".github/images/logo.png" alt="51Degrees" title="Data rewards the curious" width="160">
+
+**Device Detection and IP Intelligence in C** Varnish modules
+
+Our User-Agent parser for Varnish supports Device Detection, browser detection, mobile detection, and crawler detection on-premise. IP Intelligence adds IP geolocation, including IP to country data.
+
+It reads User-Agent and User-Agent Client Hints, HTTP request headers that carry browser and device information.
+
+## Install
+
+With the prerequisites below installed, clone the source. Run the installation commands from the cloned repository directory.
+
+```
+$ git clone --recursive https://github.com/51Degrees/51degrees-varnish.git
+```
+
+```
+$ ./autogen.sh
+
+$ ./configure --with-config=release|test --with-datafile=(optional)
+
+$ make
+
+$ sudo make install
+```
+
+Try the [User-Agent tester](https://51degrees.com/developers/user-agent-tester?utm_source=github&utm_medium=readme&utm_campaign=51degrees-varnish&utm_content=readme.md&utm_term=install) and [IP tester](https://51degrees.com/developers/ip-tester?utm_source=github&utm_medium=readme&utm_campaign=51degrees-varnish&utm_content=readme.md&utm_term=install).
+
+This repository was renamed from `device-detection-varnish` and continues that work.
+
+### Example
+
+This line of VCL sets the response header `X-Device` to the device's hardware, browser and platform names:
+
+```
+set resp.http.X-Device = fiftyonedegrees.match_all("HardwareName,BrowserName,PlatformName");
+```
 
 [Developer documentation](https://51degrees.com/documentation/_other_integrations__varnish.html?utm_source=github&utm_medium=readme&utm_campaign=51degrees-varnish&utm_content=readme.md&utm_term=51degrees-real-time-data-varnish-modules)
 
 ## Introduction
 
-The project contains source code for the Varnish integration of 51Degrees' on-premise Device Detection and IP Intelligence engines, as two modules that can be used together or on their own. The `fiftyonedegrees` module provides device detection, and the `fiftyonedegrees_ipi` module provides [IP Intelligence](#ip-intelligence).
+The project contains source code for the Varnish integration of 51Degrees' on-premise Device Detection and IP Intelligence engines, as two modules that can be used together or on their own. The `fiftyonedegrees` module provides Device Detection, and the `fiftyonedegrees_ipi` module provides [IP Intelligence](#ip-intelligence).
 
 The modules are tested on Varnish Cache 6.0.18, 9.0.4 and 9.1.0, the releases the Varnish Cache project supports, as listed on its [releases page](https://www.varnish.org/releases/index.html). They are also tested on Vinyl Cache 9.0.2 and 9.1.0, which the Vinyl Cache project supports, as listed on its [releases page](https://vinyl-cache.org/releases/).
 
-Known issue: on Varnish Cache 9.1.0 and Vinyl Cache 9.1.0, a request hangs if `vcl_synth` sets `resp.body` from more than 16 parts. Each value joined with `+` is a part, except that the strings at the start of the expression count as one part and empty values do not count. The client hints example uses 13.
+A known issue affects Varnish Cache 9.1.0 and Vinyl Cache 9.1.0. A request hangs if `vcl_synth` sets `resp.body` from more than 16 parts. Each value joined with `+` is a part, except that the strings at the start of the expression count as one part and empty values do not count. The User-Agent Client Hints example uses 13.
 
-## Pre-requisites
+## Prerequisites
 
 - gcc
 - autoconf
@@ -33,7 +69,7 @@ $ sudo apt-get install gcc autoconf automake libvarnishapi-dev varnish
 
 #### For an existing Varnish deployment
 
-##### Static Module
+##### Static module
 
 To install the module into an existing Varnish deployment,
 
@@ -75,7 +111,7 @@ The data files used by the tests can also be set when they are run, with `make c
 
 `configure` finds the Varnish headers through pkg-config. To use headers from another folder, set the environment variable `VARNISHSRC` to that folder before running `configure` (for example `export VARNISHSRC=/usr/include/varnish`).
 
-The location of where the module will be installed can also be customised by setting the environment variable `VMOD_DIR` before running the `configure`.
+The location of where the module will be installed can also be customized by setting the environment variable `VMOD_DIR` before running the `configure`.
 
 Then run the included tests with the following command. A `test` version is required for this to succeed:
 
@@ -87,11 +123,11 @@ This will all pass if the local installation was successful.
 
 ## Configure
 
-Before start matching user agents, you may wish to configure the solution to use a different database for example.
+Before start matching User-Agents, you may wish to configure the solution to use a different database for example.
 
 ### Settings
 
-#### General Settings
+#### General settings
 
 These settings should be set before calling `fiftyonedegrees.start`.
 - ``set_performance_profile`` (defaults to ``DEFAULT``). Set the performance profile.
@@ -102,7 +138,7 @@ These settings should be set before calling `fiftyonedegrees.start`.
 - ``set_use_performance_graph`` (defaults is determined by the performance profile). Set whether the performance optimized graph should be used.
 - ``set_use_predictive_graph`` (defaults is determined by the performance profile). Set whether the predictive optimized graph should be used.
 -  ``set_delimiter`` (defaults to ``','``). Sets the delimiter to separate values with.
--  ``set_properties`` (defaults to all properties). Sets the properties to initialise.
+-  ``set_properties`` (defaults to all properties). Sets the properties to initialize.
 
 ## Usage
 
@@ -114,13 +150,13 @@ man vmod_fiftyonedegrees
 
 to display all the functions with examples.
 
-### The VCL File
+### The VCL file
 
 An example configuration file is included in this repository. It shows how to add device information to HTTP headers.
 
-#### Initialising the Resource Manager
+#### Initializing the resource manager
 
-In the init block is where you should set any settings and initialise the resource manager.
+In the init block is where you should set any settings and initialize the resource manager.
 
 ```
 import fiftyonedegrees;
@@ -157,10 +193,10 @@ sub vcl_deliver {
 }
 ```
 
-##### Client-Hints
+##### User-Agent Client Hints
 
-To enable client-hint matching, add the ``set_resp_headers`` to the ``vcl_deliver`` block. This adds the ``Accept-CH`` header to the response if
-it is supported by the browser. The client-hint headers sent by the browser
+To enable Client Hint matching, add the ``set_resp_headers`` to the ``vcl_deliver`` block. This adds the ``Accept-CH`` header to the response if
+it is supported by the browser. The Client Hint headers sent by the browser
 are then automatically used by the ``match_all`` method.
 
 ```
@@ -172,9 +208,9 @@ sub vcl_deliver {
 }
 ```
 
-##### Output Format
+##### Output format
 
-The value of the header is set to a comma separated list of values (comma delimited is the default behaviour, but the delimiter can be set explicitly with ``set_delimiter``), these are in the same order the properties are listed in the config file. So setting a header with the line:
+The value of the header is set to a comma separated list of values (comma delimited is the default behavior, but the delimiter can be set explicitly with ``set_delimiter``), these are in the same order the properties are listed in the config file. So setting a header with the line:
 
 ```
 set resp.http.X-Device = fiftyonedegrees.match_all("HardwareName,BrowserName,PlatformName");
@@ -287,12 +323,12 @@ All the examples are in the `examples` folder. Device detection examples are in 
 | --- | --- |
 | `hash/gettingStarted.vcl` | `match_single` |
 | `hash/matchAll.vcl` | `match_all` |
-| `hash/clientHints.vcl` | Client hints |
+| `hash/clientHints.vcl` | User-Agent Client Hints |
 | `hash/config.vcl` | Configuration, such as drift and difference |
 | `hash/metadata.vcl` | Information about the data file |
 | `hash/matchMetrics.vcl` | The metrics of a match |
 | `hash/matchQuery.vcl` | Evidence from the query string |
-| `hash/responseHeaders/responseHeader.vcl` | Asking a browser for client hints with `set_resp_headers` |
+| `hash/responseHeaders/responseHeader.vcl` | Asking a browser for User-Agent Client Hints with `set_resp_headers` |
 | `hash/jsExample` | Serving the JavaScript and using what it sends back |
 | `ipi/gettingStarted.vcl` | IP Intelligence on its own |
 | `mixed/gettingStarted.vcl` | Both modules for the same request |
@@ -306,11 +342,11 @@ All the examples are in the `examples` folder. Device detection examples are in 
 | --- | --- |
 | `make check` | Runs the tests of both modules and each example. The `test` version is needed. |
 | `make mem-check` | Builds both modules with the address sanitizer, then runs the same tests. |
-| `tests/performance` | Measures the clock time of each request through Varnish, with each request making one detection. Run `cmake ..` and `cmake --build .` in a `build` folder there, then `ENGINE=ipi BUILD_PATH=/path/to/repository ./runPerf.sh` for IP Intelligence, or `EVIDENCE=/path/to/evidence.yml BUILD_PATH=/path/to/repository ./runPerf.sh` for device detection. It needs `cmake`, `libapr1-dev` and `libaprutil1-dev`, and writes `results.json`. |
+| `tests/performance` | Measures the clock time of each request through Varnish, with each request making one detection. Run `cmake ..` and `cmake --build .` in a `build` folder there, then `ENGINE=ipi BUILD_PATH=/path/to/repository ./runPerf.sh` for IP Intelligence, or `EVIDENCE=/path/to/evidence.yml BUILD_PATH=/path/to/repository ./runPerf.sh` for Device Detection. It needs `cmake`, `libapr1-dev` and `libaprutil1-dev`, and writes `results.json`. |
 
 ## IP Intelligence
 
-The `fiftyonedegrees_ipi` module looks up an IP address and returns the properties of the network it belongs to. It is a separate module because IP Intelligence needs the common C code compiled differently from device detection, so one library cannot hold both. `make install` installs both modules, and each VCL imports the ones it uses.
+The `fiftyonedegrees_ipi` module looks up an IP address and returns the properties of the network it belongs to. It is a separate module because IP Intelligence needs the common C code compiled differently from Device Detection, so one library cannot hold both. `make install` installs both modules, and each VCL imports the ones it uses.
 
 ### Data files
 
@@ -355,6 +391,17 @@ Pass one address. Given a list such as the value of `X-Forwarded-For`, the modul
 
 ### Values
 
-Each value takes the form `"value":weight`, where the weight is a number between 0 and 1 showing the confidence in the value. A property with several values has them separated by a pipe. The double quotes are escaped with a backslash, so the string can be used as a header value, in the same way as the [Nginx module](https://github.com/51Degrees/device-detection-nginx). For example, `fiftyonedegrees_ipi.match("AsnName,Asn", "212.58.224.22")` returns `\"BBC\":1,\"AS2818\":1` with the ASN data file.
+Each value takes the form `"value":weight`, where the weight is a number between 0 and 1 showing the confidence in the value. A property with several values has them separated by a pipe. The double quotes are escaped with a backslash, so the string can be used as a header value, in the same way as the [NGINX module](https://github.com/51Degrees/51degrees-nginx). For example, `fiftyonedegrees_ipi.match("AsnName,Asn", "212.58.224.22")` returns `\"BBC\":1,\"AS2818\":1` with the ASN data file.
 
 `N/A` is returned in place of a value when the property was not loaded, the property has no value, or the address is missing or malformed. The reason is logged as a `VCL_Error` record, and the request carries on. If the values do not fit in the workspace, the result is not set.
+
+## History
+
+This repository was renamed from `device-detection-varnish` and continues that work. The old address redirects here, and the repository retains its history, stars, and issues.
+
+## Find out more
+
+- [Device Detection](https://51degrees.com/device-detection?utm_source=github&utm_medium=readme&utm_campaign=51degrees-varnish&utm_content=readme.md&utm_term=find-out-more)
+- [IP Intelligence](https://51degrees.com/ip-intelligence?utm_source=github&utm_medium=readme&utm_campaign=51degrees-varnish&utm_content=readme.md&utm_term=find-out-more)
+- [Documentation](https://51degrees.com/documentation/index.html?utm_source=github&utm_medium=readme&utm_campaign=51degrees-varnish&utm_content=readme.md&utm_term=find-out-more)
+- https://github.com/51Degrees/51degrees-cxx
