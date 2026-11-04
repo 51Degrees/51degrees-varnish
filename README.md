@@ -38,7 +38,7 @@ This line of VCL sets the response header `X-Device` to the device's hardware, b
 set resp.http.X-Device = fiftyonedegrees.match_all("HardwareName,BrowserName,PlatformName");
 ```
 
-[Developer documentation](https://51degrees.com/documentation/_other_integrations__varnish.html?utm_source=github&utm_medium=readme&utm_campaign=51degrees-varnish&utm_content=readme.md&utm_term=51degrees-real-time-data-varnish-modules)
+[Developer documentation](https://51degrees.com/documentation/_device_detection__other_integrations__varnish.html?utm_source=github&utm_medium=readme&utm_campaign=51degrees-varnish&utm_content=readme.md&utm_term=51degrees-real-time-data-varnish-modules)
 
 ## Introduction
 
@@ -81,10 +81,18 @@ $ git clone --recursive https://github.com/51Degrees/51degrees-varnish.git
 
 This will also clone the dependent sub-module `cxx`, which holds the [51Degrees C and C++ code](https://github.com/51Degrees/51degrees-cxx), and any of its' recursive sub-modules.
 
+One of those sub-modules is `cxx/data`, the [data](https://github.com/51Degrees/data) repository. It holds a `.link` file in place of each free data file, and a script, `get-data-files.sh`, that downloads the data files. Each data file is saved beside its link, in `cxx/data/device-detection` or `cxx/data/ip-intelligence`. In a clone made before `cxx/data` was added, run `git submodule update --init --recursive` to fetch it.
+
 Move to the Varnish directory with
 
 ```
 $ cd 51degrees-varnish
+```
+
+download the Lite device detection file and the ASN IP Intelligence file, which the tests use, with
+
+```
+$ sh cxx/data/get-data-files.sh 51Degrees-LiteV4.1.hash 51Degrees-IPIV4AsnIpiV41.ipi
 ```
 
 and install the module with
@@ -113,7 +121,7 @@ The data files used by the tests can also be set when they are run, with `make c
 
 The location of where the module will be installed can also be customized by setting the environment variable `VMOD_DIR` before running the `configure`.
 
-Then run the included tests with the following command. A `test` version is required for this to succeed:
+Then run the included tests with the following command. A `test` version and the data files downloaded above are required for this to succeed:
 
 ```
 $ make check
@@ -354,7 +362,7 @@ The module reads version 4.6 data files. A data file of another version is refus
 
 | Data file | Where to get it | Properties |
 | --- | --- | --- |
-| ASN | `cxx/ip-intelligence-data/51Degrees-IPIV4AsnIpiV41.ipi`, included with the `cxx` sub-module | `AsnName` and `Asn` |
+| ASN | `sh cxx/data/get-data-files.sh 51Degrees-IPIV4AsnIpiV41.ipi` downloads it to `cxx/data/ip-intelligence/51Degrees-IPIV4AsnIpiV41.ipi` | `AsnName` and `Asn` |
 | Lite and Enterprise | See the [data file options](https://51degrees.com/pricing?utm_source=github&utm_medium=readme&utm_campaign=51degrees-varnish&utm_content=readme.md&utm_term=ip-intelligence-data-files) | Many more, such as `RegisteredName` and `RegisteredCountry` |
 
 ### The VCL file

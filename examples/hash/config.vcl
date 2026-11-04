@@ -53,6 +53,6 @@ https://github.com/51Degrees/51degrees-cxx
 The Varnish modules:
 https://github.com/51Degrees/51degrees-varnish
 
-Device detection: https://51degrees.com/products/device-detection?utm_source=github&utm_medium=example&utm_campaign=51degrees-varnish&utm_content=examples-hash-config-vcl&utm_term=device-detection
+Device detection: https://51degrees.com/device-detection?utm_source=github&utm_medium=example&utm_campaign=51degrees-varnish&utm_content=examples-hash-config-vcl&utm_term=device-detection
 Data files and pricing: https://51degrees.com/pricing?utm_source=github&utm_medium=example&utm_campaign=51degrees-varnish&utm_content=examples-hash-config-vcl&utm_term=pricing
 */

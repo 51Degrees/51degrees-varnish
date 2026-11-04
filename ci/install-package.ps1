@@ -21,7 +21,7 @@ tar xzf $tarball --strip-components=1 -C $build
 Push-Location $build
 try {
     ./configure --with-config=test --with-datafile="$assets/51Degrees-LiteV4.1.hash" `
-        --with-datafile-ipi="$repo/cxx/ip-intelligence-data/51Degrees-IPIV4AsnIpiV41.ipi"
+        --with-datafile-ipi="$repo/cxx/data/ip-intelligence/51Degrees-IPIV4AsnIpiV41.ipi"
     make
 } finally {
     Pop-Location
