@@ -27,8 +27,10 @@ examples, because the modules work only on-premise, with a data file.
 - `libtool` and `pkg-config`, which `autogen.sh` runs, and Python 3, which
   `configure` needs. CI installs `libtool` and `pkg-config` in
   `ci/setup-environment.ps1`.
-- Git, and [Git LFS](https://git-lfs.github.com/) for the Device Detection
-  data file.
+- `curl`, `gzip` and `md5sum`, which the data repository's download script
+  needs, and network access to `distributor.51degrees.com` for the data
+  files. `curl` also sends the request in "Run".
+- Git.
 
 On Ubuntu, the README installs its packages with this command.
 
@@ -51,60 +53,25 @@ git submodule update --init --recursive
 
 ### Data files
 
-The examples and tests use free data files, which need no licence key. The
-data comes from the `cxx` submodule, and two layouts exist. The default data
-file paths in `configure.ac` (`datafile=cxx/...` and `datafileipi=cxx/...`)
-name the folders the build reads, so look there to find out which layout your
-checkout has.
-
-- **`cxx/device-detection-data` and `cxx/ip-intelligence-data`.** This is the
-  layout on `rc` and `main` today. Follow "Without cxx/data".
-- **`cxx/data/device-detection` and `cxx/data/ip-intelligence`.** The draft
-  pull request [#38](https://github.com/51Degrees/51degrees-varnish/pull/38)
-  moves the build, tests, CI and examples to the
-  [data](https://github.com/51Degrees/data) repository, which cxx carries as
-  `cxx/data`. Once it is merged, follow "With cxx/data".
-
-Go by `configure.ac` rather than by whether `cxx/data` exists, because the
-folder can arrive with a newer `cxx` before `configure.ac` reads it.
-
-#### Without cxx/data
-
-The Device Detection Lite file is stored with Git LFS, as the README of the
-`cxx` submodule says. Install Git LFS, then pull the file in its submodule.
-
-```
-sudo apt-get install git-lfs
-git lfs install
-cd cxx/device-detection-data
-git lfs pull
-cd ../..
-```
-
-The IP Intelligence examples use the free ASN file,
-`cxx/ip-intelligence-data/51Degrees-IPIV4AsnIpiV41.ipi`, which is committed in
-that submodule, so there is nothing to download for it.
-
-#### With cxx/data
+The examples and tests use free data files, which need no licence key. They
+are not stored in this repository. The `cxx` submodule holds the
+[data](https://github.com/51Degrees/data) repository as `cxx/data`, which has a
+link to each file, and a script downloads them into `cxx/data/device-detection`
+and `cxx/data/ip-intelligence`, where the default data file paths in
+`configure.ac` (`datafile=` and `datafileipi=`) point. Nothing in the build
+downloads a file, so download the Device Detection Lite file and the IP
+Intelligence ASN file first.
 
 ```
 sh cxx/data/get-data-files.sh 51Degrees-LiteV4.1.hash 51Degrees-IPIV4AsnIpiV41.ipi
 ```
 
-This saves both files beside their links, in `cxx/data/device-detection` and
-`cxx/data/ip-intelligence`, and keeps a file that is already there. The script
-needs `curl` and `gzip`.
+The script keeps a file that is already there.
 
 #### Check the files
 
-- `cxx/device-detection-data/51Degrees-LiteV4.1.hash` is more than 10 MB. A
-  file of about 130 bytes that starts with
-  `version https://git-lfs.github.com/spec/v1` is a Git LFS pointer, which
-  means Git LFS has not pulled the file.
-- `cxx/ip-intelligence-data/51Degrees-IPIV4AsnIpiV41.ipi` is about 6 MB.
-
-With `cxx/data`, the same files are in `cxx/data/device-detection` and
-`cxx/data/ip-intelligence`.
+- `cxx/data/device-detection/51Degrees-LiteV4.1.hash` is more than 10 MB.
+- `cxx/data/ip-intelligence/51Degrees-IPIV4AsnIpiV41.ipi` is more than 1 MB.
 
 ### Build
 
@@ -210,12 +177,13 @@ There are none. The Varnish modules work only on-premise, with a data file.
 
 ### Pitfalls
 
-- **A Git LFS pointer instead of the data file.** `configure` does not
-  notice, because the file is there, but the tests fail. When the Device
-  Detection module cannot load its data file it calls `abort()`
-  (`loadFileErrorAbort` in `src/dd/vmod_fiftyonedegrees.c`), so the Varnish
-  child process stops and requests get no answer. The IP Intelligence module
-  refuses the VCL instead, as the README says. Check the file sizes as above.
+- **A data file that is not there.** `cxx/data` holds a `.link` for each file
+  rather than the file. `configure` does not check the data files, so it
+  passes, but the tests fail. When the Device Detection module cannot load
+  its data file it calls `abort()` (`loadFileErrorAbort` in
+  `src/dd/vmod_fiftyonedegrees.c`), so the Varnish child process stops and
+  requests get no answer. The IP Intelligence module refuses the VCL instead,
+  as the README says. Download the files and check their sizes as above.
 - **Missing submodules.** `configure` then stops with "source file not found,
   this is likely because the git submodule has not ben pulled."
 - **Windows line endings.** The repository has no `.gitattributes`, so a
@@ -238,10 +206,11 @@ There are none. The Varnish modules work only on-premise, with a data file.
   your distribution carries.
 - **Port 8080 in use.** `varnishd` then cannot listen. Pick another address
   with `-a`, and send the request there.
-- **What CI does not test.** CI does not pull Git LFS files, so its tests use
-  the Lite file that common-ci fetches, and the larger paid file, rather than
-  the copy of the Lite file in the submodule (`ci/run-unit-tests.ps1` and
-  `ci/run-integration-tests.ps1`). CI does not build the Docker image.
+- **What CI does not test.** CI's tests use the Lite file that common-ci
+  fetches, and the larger paid file, rather than a copy downloaded into
+  `cxx/data` (`ci/run-unit-tests.ps1` and `ci/run-integration-tests.ps1`).
+  `ci/fetch-assets.ps1` downloads the ASN file with the data repository's
+  script, as the steps here do. CI does not build the Docker image.
 
 ## Building the modules
 
