@@ -38,7 +38,7 @@ This line of VCL sets the response header `X-Device` to the device's hardware, b
 set resp.http.X-Device = fiftyonedegrees.match_all("HardwareName,BrowserName,PlatformName");
 ```
 
-[Developer documentation](https://51degrees.com/documentation/_other_integrations__varnish.html?utm_source=github&utm_medium=readme&utm_campaign=51degrees-varnish&utm_content=readme.md&utm_term=51degrees-real-time-data-varnish-modules)
+[Developer documentation](https://51degrees.com/documentation/_device_detection__other_integrations__varnish.html?utm_source=github&utm_medium=readme&utm_campaign=51degrees-varnish&utm_content=readme.md&utm_term=51degrees-real-time-data-varnish-modules)
 
 ## Introduction
 
