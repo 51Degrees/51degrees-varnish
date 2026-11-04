@@ -30,8 +30,8 @@ sub vcl_synth {
 }
 
 sub vcl_init {
-	fiftyonedegrees.start("/app/cxx/device-detection-data/51Degrees-LiteV4.1.hash");
-	fiftyonedegrees_ipi.start("/app/cxx/ip-intelligence-data/51Degrees-IPIV4AsnIpiV41.ipi");
+	fiftyonedegrees.start("/app/cxx/data/device-detection/51Degrees-LiteV4.1.hash");
+	fiftyonedegrees_ipi.start("/app/cxx/data/ip-intelligence/51Degrees-IPIV4AsnIpiV41.ipi");
 }
 
 /**

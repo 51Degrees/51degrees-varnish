@@ -25,15 +25,15 @@ WORK="$PWD/varnish-work"
 rm -f results.json
 
 if [ "$ENGINE" == "ipi" ]; then
-	DATA_FILE=${DATA_FILE:-$BUILD_PATH/cxx/ip-intelligence-data/51Degrees-IPIV4AsnIpiV41.ipi}
+	DATA_FILE=${DATA_FILE:-$BUILD_PATH/cxx/data/ip-intelligence/51Degrees-IPIV4AsnIpiV41.ipi}
 	# The tool can only vary the User-Agent, so the addresses are sent in it.
-	SOURCE=(-U "${EVIDENCE:-$BUILD_PATH/cxx/ip-intelligence-data/evidence.csv}")
+	SOURCE=(-U "${EVIDENCE:-$BUILD_PATH/cxx/data/ip-intelligence/evidence.csv}")
 	IMPORT="import fiftyonedegrees_ipi;"
 	INIT='fiftyonedegrees_ipi.set_performance_profile("IN_MEMORY");
 	fiftyonedegrees_ipi.start("'"$DATA_FILE"'");'
 	LOOKUP='set req.http.x-result = fiftyonedegrees_ipi.match("AsnName", req.http.user-agent);'
 else
-	DATA_FILE=${DATA_FILE:-$BUILD_PATH/cxx/device-detection-data/51Degrees-LiteV4.1.hash}
+	DATA_FILE=${DATA_FILE:-$BUILD_PATH/cxx/data/device-detection/51Degrees-LiteV4.1.hash}
 	SOURCE=(-E "${EVIDENCE:?EVIDENCE must be the evidence records file}")
 	IMPORT="import fiftyonedegrees;"
 	INIT='fiftyonedegrees.set_performance_profile("IN_MEMORY");

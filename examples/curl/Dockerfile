@@ -3,7 +3,7 @@ WORKDIR /app
 
 ARG VARNISH_VERSION=8.0.1
 
-RUN apt-get update && apt-get install --no-install-recommends -y git git-lfs curl ca-certificates \
+RUN apt-get update && apt-get install --no-install-recommends -y git curl ca-certificates \
 	build-essential automake autoconf libtool pkg-config cpio libedit-dev libncurses-dev \
 	python3 python3-docutils libpcre2-dev libpcre3-dev
 
@@ -13,6 +13,11 @@ RUN curl -fLsS -o /tmp/varnish.tgz https://varnish-cache.org/downloads/varnish-$
 	&& rm -rf /tmp/varnish /tmp/varnish.tgz
 
 RUN git clone --recurse-submodules https://github.com/51Degrees/51degrees-varnish .
+
+# The data submodule holds a link to each data file rather than the file, so
+# this step downloads the two data files that default.vcl loads.
+RUN sh cxx/data/get-data-files.sh -s examples-51degrees-varnish \
+	51Degrees-LiteV4.1.hash 51Degrees-IPIV4AsnIpiV41.ipi
 
 RUN ./autogen.sh && ./configure && make -j4 && make install
 
