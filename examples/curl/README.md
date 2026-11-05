@@ -21,7 +21,7 @@ curl --head -H 'X-Real-IP: 212.58.224.22' \
      http://127.0.0.1:8080/
 ```
 
-The values are in the response headers, such as `x-is-mobile: True` and `x-asn: \"BBC\":1`.
+The values are in the response headers, such as `x-is-mobile: True` and `x-asn: \"BBC\":1`. On the Lite data file `x-device-type` reads `N/A`, as only the Enterprise data file has DeviceType, and `x-enterprise` says where to ask for a copy.
 
 ## Find out more
 

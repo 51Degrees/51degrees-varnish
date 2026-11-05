@@ -13,6 +13,11 @@ downloads them to `cxx/data/device-detection/51Degrees-LiteV4.1.hash` and
 `cxx/data/ip-intelligence/51Degrees-IPIV4AsnIpiV41.ipi`. The paths to the data
 files need to be updated before running the example.
 
+The example also asks for HardwareVendor, HardwareName and DeviceType, and for
+Country, Latitude and Longitude, which only the Enterprise data files have. On
+the free data files each reads N/A, and the x-enterprise header says where to
+ask for a copy of the Enterprise data files.
+
 In a Linux environment, the following command:
 ```
 $ curl localhost:8080 -I -H "X-Real-IP: 212.58.224.22" -A "Mozilla/5.0 (iPhone; CPU iPhone OS 11_2 like Mac OS X) AppleWebKit/604.4.7 (KHTML, like Gecko) Mobile/15C114"
@@ -23,6 +28,9 @@ HTTP/1.1 200 OK
 ...
 x-ismobile: True
 x-asn: \"BBC\":1
+x-hardware: N/A,N/A,N/A
+x-location: N/A,N/A,N/A
+x-enterprise: Some of these properties need the Enterprise data files. Contact us for a copy at https://51degrees.com/contact-us?utm_source=code&utm_medium=example&utm_campaign=51degrees-varnish&utm_content=examples-mixed-gettingstarted-vcl&utm_term=enterprise-data-file
 ...
 ```
 */
@@ -39,11 +47,21 @@ backend default {
 sub vcl_recv {
 	set req.http.x-ismobile = fiftyonedegrees.match_all("IsMobile");
 	set req.http.x-asn = fiftyonedegrees_ipi.match("AsnName", req.http.X-Real-IP);
+	// The hardware and location properties are only in the Enterprise data
+	// files, and read N/A on the free ones.
+	set req.http.x-hardware = fiftyonedegrees.match_all("HardwareVendor,HardwareName,DeviceType");
+	set req.http.x-location = fiftyonedegrees_ipi.match("Country,Latitude,Longitude", req.http.X-Real-IP);
 }
 
 sub vcl_deliver {
 	set resp.http.x-ismobile = req.http.x-ismobile;
 	set resp.http.x-asn = req.http.x-asn;
+	set resp.http.x-hardware = req.http.x-hardware;
+	set resp.http.x-location = req.http.x-location;
+	// On a free data file, say where to ask for the Enterprise data files.
+	if (req.http.x-hardware ~ "N/A" || req.http.x-location ~ "N/A") {
+		set resp.http.x-enterprise = "Some of these properties need the Enterprise data files. Contact us for a copy at https://51degrees.com/contact-us?utm_source=code&utm_medium=example&utm_campaign=51degrees-varnish&utm_content=examples-mixed-gettingstarted-vcl&utm_term=enterprise-data-file";
+	}
 }
 
 sub vcl_init {

@@ -50,6 +50,12 @@ sub vcl_synth {
     if (resp.status == 800) {
         set resp.status = 200;
         set resp.http.Content-Type = "text/html; charset=utf-8";
+		// HardwareVendor, HardwareName and DeviceType are only in the
+		// Enterprise data file, and read N/A on a free one. Then the page says
+		// where to ask for a copy.
+		if (fiftyonedegrees.match_all("HardwareVendor,HardwareName,DeviceType") ~ "N/A") {
+			set req.http.x-enterprise = {"<p>Some of these properties need the Enterprise data file. <a href="https://51degrees.com/contact-us?utm_source=code&utm_medium=example&utm_campaign=51degrees-varnish&utm_content=examples-hash-clienthints-vcl&utm_term=enterprise-data-file">Contact us</a> for a copy.</p>"};
+		}
 
 		// Varnish Cache 9.1.0 and Vinyl Cache 9.1.0 never finish a request
 		// whose body is joined from more than 16 parts, so the platform and
@@ -136,6 +142,7 @@ sub vcl_synth {
 		Platform: "} + fiftyonedegrees.match_all("PlatformVendor,PlatformName,PlatformVersion") + {"<br />
 		Browser: "} + fiftyonedegrees.match_all("BrowserVendor,BrowserName,BrowserVersion") + {"
     </p>
+"} + req.http.x-enterprise + {"
 </div>"};
         return (deliver);
     }

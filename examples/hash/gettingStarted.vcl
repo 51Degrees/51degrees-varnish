@@ -26,6 +26,16 @@ HTTP/1.1 200 OK
 ...
 X-IsMobile: True
 ```
+The example also asks for HardwareVendor, HardwareName and DeviceType, which
+only the Enterprise data file has. On the free Lite data file each reads N/A,
+and the X-Enterprise header says where to ask for a copy of the Enterprise
+data file:
+```
+X-Hardware: N/A,N/A,N/A
+X-Enterprise: Some of these properties need the Enterprise data file. Contact us for a copy at https://51degrees.com/contact-us?utm_source=code&utm_medium=example&utm_campaign=51degrees-varnish&utm_content=examples-hash-gettingstarted-vcl&utm_term=enterprise-data-file
+```
+With the Enterprise data file X-Hardware holds their values and there is no
+X-Enterprise header.
 
 */
 vcl 4.0;
@@ -43,6 +53,13 @@ sub vcl_recv {
 
 sub vcl_deliver {
 	set resp.http.X-IsMobile = fiftyonedegrees.match_single(req.http.user-agent, "IsMobile");
+	// HardwareVendor, HardwareName and DeviceType are only in the Enterprise
+	// data file, and read N/A on a free one. Then X-Enterprise says where to
+	// ask for a copy.
+	set resp.http.X-Hardware = fiftyonedegrees.match_single(req.http.user-agent, "HardwareVendor,HardwareName,DeviceType");
+	if (resp.http.X-Hardware ~ "N/A") {
+		set resp.http.X-Enterprise = "Some of these properties need the Enterprise data file. Contact us for a copy at https://51degrees.com/contact-us?utm_source=code&utm_medium=example&utm_campaign=51degrees-varnish&utm_content=examples-hash-gettingstarted-vcl&utm_term=enterprise-data-file";
+	}
 }
 
 sub vcl_init {

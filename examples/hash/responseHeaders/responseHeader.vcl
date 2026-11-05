@@ -8,9 +8,10 @@ refreshed.
 
 This example is available in full on [GitHub](https://github.com/51Degrees/51degrees-varnish/blob/main/examples/hash/responseHeaders/responseHeader.vcl).
 
-The example needs a data file with the SetHeader properties, which the Lite data
-file does not have. The path to the data file needs to be updated before running
-the example.
+The free Lite data file has the SetHeader properties the Accept-CH header needs.
+It does not have HardwareVendor, HardwareName and DeviceType, which the page then
+shows as N/A, with a link to ask for a copy of the Enterprise data file. The path
+to the data file needs to be updated before running the example.
 
 Open http://localhost:8080 in a browser, and refresh the page.
 */
@@ -29,19 +30,27 @@ sub vcl_recv {
 
 sub vcl_synth {
 	fiftyonedegrees.set_resp_headers();
+	// HardwareVendor, HardwareName and DeviceType are only in the Enterprise
+	// data file, and read N/A on a free one. Then the page says where to ask
+	// for a copy.
+	if (fiftyonedegrees.match_all("HardwareVendor,HardwareName,DeviceType") ~ "N/A") {
+		set req.http.x-enterprise = {"<p>Some of these properties need the Enterprise data file. <a href="https://51degrees.com/contact-us?utm_source=code&utm_medium=example&utm_campaign=51degrees-varnish&utm_content=examples-hash-responseheaders-responseheader-vcl&utm_term=enterprise-data-file">Contact us</a> for a copy.</p>"};
+	}
 	set resp.http.Content-Type = "text/html";
-	set resp.body = "<html><body><ul>" +
-		"<li>Hardware vendor: " + fiftyonedegrees.match_all("HardwareVendor") + "</li>" +
-		"<li>Hardware name: " + fiftyonedegrees.match_all("HardwareName") + "</li>" +
-		"<li>Device type: " + fiftyonedegrees.match_all("DeviceType") + "</li>" +
-		"<li>Platform: " + fiftyonedegrees.match_all("PlatformVendor,PlatformName,PlatformVersion") + "</li>" +
-		"<li>Browser: " + fiftyonedegrees.match_all("BrowserVendor,BrowserName,BrowserVersion") + "</li>" +
-		"</ul></body></html>";
+	// Varnish Cache 9.1.0 and Vinyl Cache 9.1.0 never finish a request whose
+	// body is joined from more than 16 parts, so the text between the values
+	// is one part each.
+	set resp.body = "<html><body><ul><li>Hardware vendor: " + fiftyonedegrees.match_all("HardwareVendor") +
+		"</li><li>Hardware name: " + fiftyonedegrees.match_all("HardwareName") +
+		"</li><li>Device type: " + fiftyonedegrees.match_all("DeviceType") +
+		"</li><li>Platform: " + fiftyonedegrees.match_all("PlatformVendor,PlatformName,PlatformVersion") +
+		"</li><li>Browser: " + fiftyonedegrees.match_all("BrowserVendor,BrowserName,BrowserVersion") +
+		"</li></ul>" + req.http.x-enterprise + "</body></html>";
 	return (deliver);
 }
 
 sub vcl_init {
-	fiftyonedegrees.start("/etc/varnish/51Degrees-Enterprise-HashV41.hash");
+	fiftyonedegrees.start("/etc/varnish/51Degrees-LiteV4.1.hash");
 }
 
 /**
