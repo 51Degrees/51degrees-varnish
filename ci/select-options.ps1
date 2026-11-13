@@ -2,9 +2,7 @@ param(
     # Every entry of options.json.
     [Parameter(Mandatory)][object[]]$Options,
     # The files the pull request changes, less documentation.
-    [string[]]$ChangedFiles,
-    # Those of the changed files whose change touches only comments.
-    [string[]]$CommentOnlyFiles
+    [string[]]$ChangedFiles
 )
 # Chooses the options.json entries a pull request is built on, for common-ci's
 # steps/select-options.ps1. The branch itself and a release build every entry.
