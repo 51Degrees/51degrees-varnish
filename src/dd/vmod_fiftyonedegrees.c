@@ -185,8 +185,6 @@ VCL_STRING vmod_get_dataset_name(const struct vrt_ctx *ctx)
 		WS_Release(ctx->ws, 0);
 		return(NULL);
 	}
-	// Release the safe reference
-	DataSetHashRelease(dataset);
 	// Update work space with what has been used.
 	WS_Release(ctx->ws, v);
 	return (p);
