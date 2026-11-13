@@ -300,3 +300,17 @@ VCL_INT vmod_get_allocated(const struct vrt_ctx *ctx)
 {
 	return (VCL_INT)MemoryTrackingGetAllocated();
 }
+
+/**
+ * VMOD Function
+ * Get the number of references to the active data set that are held. A
+ * reference is a count rather than an allocation, so this lets a test check
+ * that a function releases the data set it takes.
+ * @param ctx the context
+ * @return the references to the active data set held
+ */
+VCL_INT vmod_get_dataset_in_use(const struct vrt_ctx *ctx)
+{
+	return (VCL_INT)fiftyoneDegreesResourceHandleGetUse(
+		(fiftyoneDegreesResourceHandle *)global.manager->active);
+}
