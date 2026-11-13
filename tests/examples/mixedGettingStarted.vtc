@@ -31,8 +31,8 @@ shell {
 	sed -e 's#/etc/varnish/51Degrees-LiteV4.1.hash#${vmod_fod_datafile}#' \
 		-e 's#/etc/varnish/51Degrees-Enterprise-HashV41.hash#${vmod_fod_datafile}#' \
 		-e 's#/etc/varnish/51Degrees-IPIV4AsnIpiV41.ipi#${vmod_ipi_datafile}#' \
-		-e 's#/app/cxx/device-detection-data/51Degrees-LiteV4.1.hash#${vmod_fod_datafile}#' \
-		-e 's#/app/cxx/ip-intelligence-data/51Degrees-IPIV4AsnIpiV41.ipi#${vmod_ipi_datafile}#' \
+		-e 's#/app/cxx/data/device-detection/51Degrees-LiteV4.1.hash#${vmod_fod_datafile}#' \
+		-e 's#/app/cxx/data/ip-intelligence/51Degrees-IPIV4AsnIpiV41.ipi#${vmod_ipi_datafile}#' \
 		-e 's#\.host = "127.0.0.1"#.host = "${s1_addr}"#' \
 		-e 's#\.port = "80"#.port = "${s1_port}"#' \
 		"${vmod_topsrc}/examples/mixed/gettingStarted.vcl" > "${tmpdir}/example.vcl"
