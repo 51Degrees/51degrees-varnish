@@ -395,7 +395,7 @@ sub vcl_recv {
 
 With no second argument `match` looks up `client.ip`. When Varnish sits behind a proxy or a load balancer, pass the address to use instead, for example `fiftyonedegrees_ipi.match("AsnName", req.http.X-Real-IP)`.
 
-Pass one address. Given a list such as the value of `X-Forwarded-For`, the module looks up the first address in the string and ignores the rest, and the first address is not always one you can trust, so choose the address in VCL.
+Pass one address. The value is read only when all of it is one IPv4 or IPv6 address, which may have a port, as in `212.58.224.22:80` or `[2001:db8::1]:80`, as the [IP Intelligence specification](https://github.com/51Degrees/specifications/blob/main/ip-intelligence-specification/pipeline-elements/ip-intelligence-on-premise.md#reading-the-client-ip-value) says. Anything else gives `N/A`, such as a list like the value of `X-Forwarded-For`, a prefix length like `/24`, or text after the address. The first address in a list is not always one you can trust, so choose the address in VCL.
 
 ### Values
 

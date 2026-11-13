@@ -19,6 +19,7 @@ libvmod_fiftyonedegrees_la_SOURCES = \
 	../../cxx/src/common/component.c \
 	../../cxx/src/common/data.c \
 	../../cxx/src/common/dataset.c \
+	../../cxx/src/common/date.c \
 	../../cxx/src/common/evidence.c \
 	../../cxx/src/common/exceptionsc.c \
 	../../cxx/src/common/file.c \
@@ -107,6 +108,7 @@ noinst_HEADERS = \
 	../../cxx/src/common/headers.h \
 	../../cxx/src/common/indices.h \
 	../../cxx/src/common/ip.h \
+	../../cxx/src/common/ipiSymbols.h \
 	../../cxx/src/common/json.h \
 	../../cxx/src/common/list.h \
 	../../cxx/src/common/memory.h \
