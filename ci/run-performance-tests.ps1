@@ -18,8 +18,8 @@ $ipi = $Name -like '*_IPI'
 $env:BUILD_PATH = (Test-Path "$repo/package-build") ? "$repo/package-build" : $repo
 if ($ipi) {
     $env:ENGINE = "ipi"
-    $env:DATA_FILE = "$repo/cxx/ip-intelligence-data/51Degrees-IPIV4AsnIpiV41.ipi"
-    $env:EVIDENCE = "$repo/cxx/ip-intelligence-data/evidence.csv"
+    $env:DATA_FILE = "$repo/cxx/data/ip-intelligence/51Degrees-IPIV4AsnIpiV41.ipi"
+    $env:EVIDENCE = "$repo/cxx/data/ip-intelligence/evidence.csv"
 } else {
     $env:ENGINE = "hash"
     $env:DATA_FILE = "$assets/TAC-HashV41.hash"
