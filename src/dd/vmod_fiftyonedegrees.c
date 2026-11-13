@@ -1619,8 +1619,6 @@ static VCL_STRING printMatch(
 	// Skip over the null terminator.
 	v++;
 
-	// Release resource held in results instance
-	ResultsHashFree(results);
 
 	if (v > u) {
 		// No space, reset and leave.
