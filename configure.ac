@@ -110,7 +110,7 @@ AM_CONDITIONAL([FIFTYONEDEGREES_TEST], [test x$config = xtest])
 AC_ARG_WITH([datafile],
 			AS_HELP_STRING([--with-datafile=path/to/datafile], [The data file to be bundled into the build, this is used by the tests. By default, Lite data file will be used]),
     [datafile=$withval],
-    [datafile=cxx/device-detection-data/51Degrees-LiteV4.1.hash])
+    [datafile=cxx/data/device-detection/51Degrees-LiteV4.1.hash])
 
 if test "x$datafile" = "x"; then
 	AC_MSG_NOTICE([Including default data file])
@@ -128,7 +128,7 @@ AC_SUBST(FIFTYONEDEGREES_DATAFILE_ABSOLUTE, $datafileabsolute)
 AC_ARG_WITH([datafile-ipi],
 			AS_HELP_STRING([--with-datafile-ipi=path/to/datafile], [The IP Intelligence data file used by the tests. By default, the ASN data file will be used]),
     [datafileipi=$withval],
-    [datafileipi=cxx/ip-intelligence-data/51Degrees-IPIV4AsnIpiV41.ipi])
+    [datafileipi=cxx/data/ip-intelligence/51Degrees-IPIV4AsnIpiV41.ipi])
 
 AC_MSG_NOTICE([Including IP Intelligence data file at '$datafileipi'])
 

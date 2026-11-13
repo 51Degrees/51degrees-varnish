@@ -26,6 +26,7 @@ libvmod_fiftyonedegrees_ipi_la_SOURCES = \
 	../../cxx/src/common/component.c \
 	../../cxx/src/common/data.c \
 	../../cxx/src/common/dataset.c \
+	../../cxx/src/common/date.c \
 	../../cxx/src/common/evidence.c \
 	../../cxx/src/common/exceptionsc.c \
 	../../cxx/src/common/file.c \
@@ -85,6 +86,7 @@ noinst_HEADERS = \
 	../../cxx/src/ipi/fiftyone.h \
 	../../cxx/src/ipi/ipi.h \
 	../../cxx/src/ipi/ipi_weighted_results.h \
+	../../cxx/src/ipi/weightText.h \
 	../../cxx/src/ipi/graph/graph.h
 
 EXTRA_DIST = \

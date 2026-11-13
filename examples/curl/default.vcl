@@ -30,8 +30,8 @@ sub vcl_synth {
 }
 
 sub vcl_init {
-	fiftyonedegrees.start("/app/cxx/device-detection-data/51Degrees-LiteV4.1.hash");
-	fiftyonedegrees_ipi.start("/app/cxx/ip-intelligence-data/51Degrees-IPIV4AsnIpiV41.ipi");
+	fiftyonedegrees.start("/app/cxx/data/device-detection/51Degrees-LiteV4.1.hash");
+	fiftyonedegrees_ipi.start("/app/cxx/data/ip-intelligence/51Degrees-IPIV4AsnIpiV41.ipi");
 }
 
 /**
@@ -42,7 +42,7 @@ https://github.com/51Degrees/51degrees-cxx
 The Varnish modules:
 https://github.com/51Degrees/51degrees-varnish
 
-Device detection: https://51degrees.com/products/device-detection?utm_source=github&utm_medium=example&utm_campaign=51degrees-varnish&utm_content=examples-curl-default-vcl&utm_term=device-detection
-IP Intelligence: https://51degrees.com/products/ip-intelligence?utm_source=github&utm_medium=example&utm_campaign=51degrees-varnish&utm_content=examples-curl-default-vcl&utm_term=ip-intelligence
+Device detection: https://51degrees.com/device-detection?utm_source=github&utm_medium=example&utm_campaign=51degrees-varnish&utm_content=examples-curl-default-vcl&utm_term=device-detection
+IP Intelligence: https://51degrees.com/ip-intelligence?utm_source=github&utm_medium=example&utm_campaign=51degrees-varnish&utm_content=examples-curl-default-vcl&utm_term=ip-intelligence
 Data files and pricing: https://51degrees.com/pricing?utm_source=github&utm_medium=example&utm_campaign=51degrees-varnish&utm_content=examples-curl-default-vcl&utm_term=pricing
 */

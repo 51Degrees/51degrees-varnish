@@ -572,7 +572,8 @@ static void initSetHeaders()
 			"SetHeader", strlen("SetHeader")) == 0) {
 				headerName = skipComponentName(propertyName + strlen("SetHeader"));
 				setHeader = &global.setHeaders[getSetHeaderIndex(headerNames, headerName, setHeaderCount)];
-				setHeader->propertyIndexes[setHeader->propertyCount] = i;
+				setHeader->propertyIndexes[setHeader->propertyCount] =
+					dataSet->b.b.available->items[i].requiredPropertyIndex;
 				setHeader->propertyCount++;
 			}
 	}
@@ -736,10 +737,26 @@ static const char *getRequiredPropertyName(
 }
 
 /**
+ * Method used to get the index the reads take for the required property at
+ * the given index. The required properties are sorted by name, and the reads
+ * take the place of the property among the names the module was started
+ * with, which is the same place only when no names were given.
+ * @param results the match results
+ * @param index index of the target property
+ * @return the index to read the property with
+ */
+static int getRequiredPropertyReadIndex(
+	ResultsHash *results,
+	int index) {
+	return ((DataSetHash *)results->b.b.dataSet)->b.b.available->items[index].requiredPropertyIndex;
+}
+
+/**
  * Method used to obtain the required property value by using its' index.
  * The buffer is always left null terminated if it has any space.
  * @param results the match results
- * @param requiredPropertyIndex the index of the required property
+ * @param requiredPropertyIndex the index to read the property with, from
+ * getRequiredPropertyReadIndex
  * @param p buffer which will hold the value
  * @param u the size of the buffer
  * @param logMissing true if missing values should be logged
@@ -801,9 +818,12 @@ static unsigned writeValue(
 					reasonMessage = "Failed to obtain the reason";
 
 				// Print a message to indicate that property has no values.
+				String *name = PropertiesGetNameFromRequiredIndex(
+					((DataSetHash *)results->b.b.dataSet)->b.b.available,
+					requiredPropertyIndex);
 				fprintf(stderr,
 					VMODFOD_PROP_NO_VALUES_MSG_FORMAT,
-					getRequiredPropertyName(results, requiredPropertyIndex),
+					STRING(name),
 					reasonMessage);
 			}
 		}
@@ -814,6 +834,39 @@ static unsigned writeValue(
 	}
 
 	return length;
+}
+
+/**
+ * Method used to check whether the name is one of the match metrics, which
+ * are read from the results rather than from the properties of the data set.
+ * @param name the name to check
+ * @return true if the name is a match metric
+ */
+static bool isMatchMetric(const char *name) {
+	return StringCompare(name, "Iterations") == 0 ||
+		StringCompare(name, "Drift") == 0 ||
+		StringCompare(name, "Difference") == 0 ||
+		StringCompare(name, "Method") == 0 ||
+		StringCompare(name, "UserAgents") == 0 ||
+		StringCompare(name, "MatchedNodes") == 0;
+}
+
+/**
+ * Method used to walk every graph the results have not yet walked, so that
+ * the match metrics, which the walks set in the results, can be read. Unless
+ * the module was started with its properties named, a graph is walked only
+ * when a property of its component is first read.
+ * @param results the match results
+ * @return true if no walk failed, otherwise false, with the failure logged
+ */
+static bool evaluateAll(ResultsHash *results) {
+	EXCEPTION_CREATE;
+	ResultsEvaluateAll(&results->b.b, exception);
+	if (EXCEPTION_FAILED) {
+		logExceptionMessage(exception);
+		return false;
+	}
+	return true;
 }
 
 /**
@@ -836,7 +889,13 @@ unsigned getValue(
 	char *currentPropertyName;
 	bool found = false;
 
-	if (StringCompare(requiredPropertyName, "Iterations") == 0)
+	if (isMatchMetric(requiredPropertyName) && evaluateAll(results) == false)
+	{
+		// The metrics are not known if a walk failed, so the value is empty.
+		snprintf(p, u, "%c", '\0');
+		v = 0;
+	}
+	else if (StringCompare(requiredPropertyName, "Iterations") == 0)
 	{
 		v = snprintf(p, u, "%d", results->items->iterations);
 	}
@@ -909,7 +968,7 @@ unsigned getValue(
 				// workspace
 				v += writeValue(
 					results,
-					i,
+					getRequiredPropertyReadIndex(results, i),
 				    p,
 					u,
 					true);
@@ -1661,7 +1720,12 @@ static VCL_STRING printJavascript(
 	if (property != NULL) {
 		for (i = 0; i < getRequiredPropertyCount(results); i++) {
 			if (StringCompare(getRequiredPropertyName(results, i), property) == 0) {
-				v = writeValue(results, i, p, u, true);
+				v = writeValue(
+					results,
+					getRequiredPropertyReadIndex(results, i),
+					p,
+					u,
+					true);
 				break;
 			}
 		}
