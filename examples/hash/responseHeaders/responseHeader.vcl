@@ -45,7 +45,16 @@ sub vcl_synth {
 		"</li><li>Device type: " + fiftyonedegrees.match_all("DeviceType") +
 		"</li><li>Platform: " + fiftyonedegrees.match_all("PlatformVendor,PlatformName,PlatformVersion") +
 		"</li><li>Browser: " + fiftyonedegrees.match_all("BrowserVendor,BrowserName,BrowserVersion") +
-		"</li></ul>" + req.http.x-enterprise + "</body></html>";
+		"</li></ul>" + req.http.x-enterprise + {"
+<hr />
+<h3>Find out more</h3>
+<ul>
+	<li>The engine this example uses: <a href="https://github.com/51Degrees/51degrees-cxx">https://github.com/51Degrees/51degrees-cxx</a></li>
+	<li>The Varnish modules: <a href="https://github.com/51Degrees/51degrees-varnish">https://github.com/51Degrees/51degrees-varnish</a></li>
+	<li><a href="https://51degrees.com/device-detection?utm_source=code&utm_medium=example&utm_campaign=51degrees-varnish&utm_content=examples-hash-responseheaders-responseheader-vcl&utm_term=device-detection">Device detection</a></li>
+	<li><a href="https://51degrees.com/pricing?utm_source=code&utm_medium=example&utm_campaign=51degrees-varnish&utm_content=examples-hash-responseheaders-responseheader-vcl&utm_term=pricing">Data files and pricing</a></li>
+</ul>
+</body></html>"};
 	return (deliver);
 }
 
