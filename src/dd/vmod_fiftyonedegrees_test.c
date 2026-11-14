@@ -273,3 +273,44 @@ VCL_BOOL vmod_get_use_predictive_graph(const struct vrt_ctx *ctx)
 {
 	return global.config->usePredictiveGraph;
 }
+
+/**
+ * VMOD Function
+ * Track every allocation the 51Degrees library makes from now on. Call it
+ * first in vcl_init, before the data set is loaded, so that everything the
+ * library frees was tracked when it was allocated. Tracking is left off
+ * otherwise, as it slows every allocation down.
+ * @param ctx the context
+ */
+void vmod_track_allocations(const struct vrt_ctx *ctx)
+{
+	SetUpMemoryTracking();
+}
+
+/**
+ * VMOD Function
+ * Get the number of bytes the 51Degrees library has allocated, since
+ * track_allocations was called, and not yet freed. A test can then check
+ * that a function frees everything it allocates for a request, such as the
+ * results which hold a reference to the data set.
+ * @param ctx the context
+ * @return the bytes allocated and not yet freed
+ */
+VCL_INT vmod_get_allocated(const struct vrt_ctx *ctx)
+{
+	return (VCL_INT)MemoryTrackingGetAllocated();
+}
+
+/**
+ * VMOD Function
+ * Get the number of references to the active data set that are held. A
+ * reference is a count rather than an allocation, so this lets a test check
+ * that a function releases the data set it takes.
+ * @param ctx the context
+ * @return the references to the active data set held
+ */
+VCL_INT vmod_get_dataset_in_use(const struct vrt_ctx *ctx)
+{
+	return (VCL_INT)fiftyoneDegreesResourceHandleGetUse(
+		(fiftyoneDegreesResourceHandle *)global.manager->active);
+}
