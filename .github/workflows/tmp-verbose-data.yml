@@ -1,0 +1,37 @@
+name: Temporary make check from a fresh clone without data files
+
+on:
+  push:
+    branches:
+      - tmp/verbose-data
+
+permissions:
+  contents: read
+
+jobs:
+  fresh:
+    strategy:
+      fail-fast: false
+      matrix:
+        ref: [rc, feature/download-data-files]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - name: Fresh clone with submodules and no data files
+        run: |
+          git clone --branch ${{ matrix.ref }} --recurse-submodules --shallow-submodules https://github.com/51Degrees/51degrees-varnish v
+          git -C v log -1 --format='%h %s'
+          ls -la v/cxx/data/device-detection/ v/cxx/data/ip-intelligence/ | grep -E "Lite|Asn"
+      - name: Set up as CI does
+        shell: pwsh
+        run: ./v/ci/setup-environment.ps1 -VarnishVersion 9.1.0
+      - name: Build as CI does
+        run: |
+          cd v
+          pwsh ./ci/build-project.ps1 > ../build.log 2>&1 || { tail -30 ../build.log; exit 1; }
+          tail -3 ../build.log
+      - name: make check with nothing set
+        run: |
+          cd v
+          set -o pipefail
+          make -k check 2>&1 | tee ../check.log | grep -E "Downloading|Saved|TEST .* (FAILED|passed)|not saved" | sort | uniq -c | sort -rn | head -60
