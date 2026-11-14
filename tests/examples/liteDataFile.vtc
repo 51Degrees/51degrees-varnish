@@ -1,0 +1,157 @@
+#
+# This Original Work is copyright of 51 Degrees Mobile Experts Limited.
+# Copyright 2020 51 Degrees Mobile Experts Limited, 5 Charlotte Close,
+# Caversham, Reading, Berkshire, United Kingdom RG4 7BY.
+#
+# This Original Work is licensed under the European Union Public Licence (EUPL) 
+# v.1.2 and is subject to its terms as set out below.
+#
+# If a copy of the EUPL was not distributed with this file, You can obtain
+# one at https://opensource.org/licenses/EUPL-1.2.
+#
+# The 'Compatible Licences' set out in the Appendix to the EUPL (as may be
+# amended by the European Commission) shall be deemed incompatible for
+# the purposes of the Work and the provisions of the compatibility
+# clause in Article 5 of the EUPL shall not apply.
+# 
+# If using the Work as, or as part of, a network application, by 
+# including the attribution notice(s) required under Article 5 of the EUPL
+# in the end user terms of the application under an appropriate heading, 
+# such notice(s) shall fulfill the requirements of that article.
+#
+
+varnishtest "On the free Lite data file the examples say what the Enterprise data file adds"
+
+# Runs only when the tests are given the Lite data file.
+feature cmd {echo "${vmod_fod_datafile}" | grep -q Lite}
+
+server s1 -repeat 20 {
+	rxreq
+	txresp
+} -start
+
+shell {
+	sed -e 's#/etc/varnish/51Degrees-LiteV4.1.hash#${vmod_fod_datafile}#' \
+		-e 's#/etc/varnish/51Degrees-Enterprise-HashV41.hash#${vmod_fod_datafile}#' \
+		-e 's#/etc/varnish/51Degrees-IPIV4AsnIpiV41.ipi#${vmod_ipi_datafile}#' \
+		-e 's#/app/cxx/data/device-detection/51Degrees-LiteV4.1.hash#${vmod_fod_datafile}#' \
+		-e 's#/app/cxx/data/ip-intelligence/51Degrees-IPIV4AsnIpiV41.ipi#${vmod_ipi_datafile}#' \
+		-e 's#\.host = "127.0.0.1"#.host = "${s1_addr}"#' \
+		-e 's#\.port = "80"#.port = "${s1_port}"#' \
+		"${vmod_topsrc}/examples/hash/gettingStarted.vcl" > "${tmpdir}/example1.vcl"
+}
+
+${vcache} v1 -arg "-p vmod_path=${vmod_topbuild}/src/dd/.libs:${vmod_topbuild}/src/ipi/.libs" -vcl+backend {} -start
+${vcache} v1 -cliok "vcl.load example ${tmpdir}/example1.vcl"
+${vcache} v1 -cliok "vcl.use example"
+
+shell {
+	sed -e 's#/etc/varnish/51Degrees-LiteV4.1.hash#${vmod_fod_datafile}#' \
+		-e 's#/etc/varnish/51Degrees-Enterprise-HashV41.hash#${vmod_fod_datafile}#' \
+		-e 's#/etc/varnish/51Degrees-IPIV4AsnIpiV41.ipi#${vmod_ipi_datafile}#' \
+		-e 's#/app/cxx/data/device-detection/51Degrees-LiteV4.1.hash#${vmod_fod_datafile}#' \
+		-e 's#/app/cxx/data/ip-intelligence/51Degrees-IPIV4AsnIpiV41.ipi#${vmod_ipi_datafile}#' \
+		-e 's#\.host = "127.0.0.1"#.host = "${s1_addr}"#' \
+		-e 's#\.port = "80"#.port = "${s1_port}"#' \
+		"${vmod_topsrc}/examples/curl/default.vcl" > "${tmpdir}/example2.vcl"
+}
+
+${vcache} v2 -arg "-p vmod_path=${vmod_topbuild}/src/dd/.libs:${vmod_topbuild}/src/ipi/.libs" -vcl+backend {} -start
+${vcache} v2 -cliok "vcl.load example ${tmpdir}/example2.vcl"
+${vcache} v2 -cliok "vcl.use example"
+
+shell {
+	sed -e 's#/etc/varnish/51Degrees-LiteV4.1.hash#${vmod_fod_datafile}#' \
+		-e 's#/etc/varnish/51Degrees-Enterprise-HashV41.hash#${vmod_fod_datafile}#' \
+		-e 's#/etc/varnish/51Degrees-IPIV4AsnIpiV41.ipi#${vmod_ipi_datafile}#' \
+		-e 's#/app/cxx/data/device-detection/51Degrees-LiteV4.1.hash#${vmod_fod_datafile}#' \
+		-e 's#/app/cxx/data/ip-intelligence/51Degrees-IPIV4AsnIpiV41.ipi#${vmod_ipi_datafile}#' \
+		-e 's#\.host = "127.0.0.1"#.host = "${s1_addr}"#' \
+		-e 's#\.port = "80"#.port = "${s1_port}"#' \
+		"${vmod_topsrc}/examples/hash/responseHeaders/responseHeader.vcl" > "${tmpdir}/example3.vcl"
+}
+
+${vcache} v3 -arg "-p vmod_path=${vmod_topbuild}/src/dd/.libs:${vmod_topbuild}/src/ipi/.libs" -vcl+backend {} -start
+${vcache} v3 -cliok "vcl.load example ${tmpdir}/example3.vcl"
+${vcache} v3 -cliok "vcl.use example"
+
+shell {
+	sed -e 's#/etc/varnish/51Degrees-LiteV4.1.hash#${vmod_fod_datafile}#' \
+		-e 's#/etc/varnish/51Degrees-Enterprise-HashV41.hash#${vmod_fod_datafile}#' \
+		-e 's#/etc/varnish/51Degrees-IPIV4AsnIpiV41.ipi#${vmod_ipi_datafile}#' \
+		-e 's#/app/cxx/data/device-detection/51Degrees-LiteV4.1.hash#${vmod_fod_datafile}#' \
+		-e 's#/app/cxx/data/ip-intelligence/51Degrees-IPIV4AsnIpiV41.ipi#${vmod_ipi_datafile}#' \
+		-e 's#\.host = "127.0.0.1"#.host = "${s1_addr}"#' \
+		-e 's#\.port = "80"#.port = "${s1_port}"#' \
+		"${vmod_topsrc}/examples/hash/clientHints.vcl" > "${tmpdir}/example4.vcl"
+}
+
+${vcache} v4 -arg "-p vmod_path=${vmod_topbuild}/src/dd/.libs:${vmod_topbuild}/src/ipi/.libs" -vcl+backend {} -start
+${vcache} v4 -cliok "vcl.load example ${tmpdir}/example4.vcl"
+${vcache} v4 -cliok "vcl.use example"
+
+shell {
+	sed -e 's#/etc/varnish/51Degrees-LiteV4.1.hash#${vmod_fod_datafile}#' \
+		-e 's#/etc/varnish/51Degrees-Enterprise-HashV41.hash#${vmod_fod_datafile}#' \
+		-e 's#/etc/varnish/51Degrees-IPIV4AsnIpiV41.ipi#${vmod_ipi_datafile}#' \
+		-e 's#/app/cxx/data/device-detection/51Degrees-LiteV4.1.hash#${vmod_fod_datafile}#' \
+		-e 's#/app/cxx/data/ip-intelligence/51Degrees-IPIV4AsnIpiV41.ipi#${vmod_ipi_datafile}#' \
+		-e 's#\.host = "127.0.0.1"#.host = "${s1_addr}"#' \
+		-e 's#\.port = "80"#.port = "${s1_port}"#' \
+		"${vmod_topsrc}/examples/hash/jsExample/javascript.vcl" > "${tmpdir}/example5.vcl"
+}
+
+${vcache} v5 -arg "-p vmod_path=${vmod_topbuild}/src/dd/.libs:${vmod_topbuild}/src/ipi/.libs" -vcl+backend {} -start
+${vcache} v5 -cliok "vcl.load example ${tmpdir}/example5.vcl"
+${vcache} v5 -cliok "vcl.use example"
+
+client c1 -connect ${v1_sock} {
+	txreq -hdr "User-Agent: Mozilla/5.0 (iPhone; CPU iPhone OS 7_1 like Mac OS X) AppleWebKit/537.51.2 (KHTML, like Gecko) Version/7.0 Mobile/11D167 Safari/9537.53"
+	rxresp
+	expect resp.status == 200
+	expect resp.http.X-IsMobile == "True"
+	expect resp.http.X-Hardware == "N/A,N/A,N/A"
+	expect resp.http.X-Enterprise ~ {https://51degrees\.com/contact-us\?}
+} -run
+
+client c2 -connect ${v2_sock} {
+	txreq -hdr "X-Real-IP: 212.58.224.22" -hdr "User-Agent: Mozilla/5.0 (iPhone; CPU iPhone OS 7_1 like Mac OS X) AppleWebKit/537.51.2 (KHTML, like Gecko) Version/7.0 Mobile/11D167 Safari/9537.53"
+	rxresp
+	expect resp.status == 200
+	expect resp.http.x-device-type == "N/A"
+	expect resp.http.x-enterprise ~ {https://51degrees\.com/contact-us\?}
+} -run
+
+client c3 -connect ${v3_sock} {
+	txreq -hdr "User-Agent: Mozilla/5.0 (iPhone; CPU iPhone OS 7_1 like Mac OS X) AppleWebKit/537.51.2 (KHTML, like Gecko) Version/7.0 Mobile/11D167 Safari/9537.53"
+	rxresp
+	expect resp.status == 200
+	expect resp.body ~ "Hardware vendor: N/A"
+	expect resp.body ~ {<a href="https://51degrees\.com/contact-us\?[^"]*">Contact us</a>}
+} -run
+
+client c4 -connect ${v4_sock} {
+	txreq -hdr "User-Agent: Mozilla/5.0 (iPhone; CPU iPhone OS 7_1 like Mac OS X) AppleWebKit/537.51.2 (KHTML, like Gecko) Version/7.0 Mobile/11D167 Safari/9537.53"
+	rxresp
+	expect resp.status == 200
+	expect resp.body ~ {<a href="https://51degrees\.com/contact-us\?[^"]*">Contact us</a>}
+} -run
+
+${vcache} v1 -cliexpect "Child has not panicked" "panic.show"
+${vcache} v2 -cliexpect "Child has not panicked" "panic.show"
+${vcache} v3 -cliexpect "Child has not panicked" "panic.show"
+client c5 -connect ${v5_sock} {
+	txreq -url "/51D.js" -hdr "User-Agent: Mozilla/5.0 (iPhone; CPU iPhone OS 7_1 like Mac OS X) AppleWebKit/537.51.2 (KHTML, like Gecko) Version/7.0 Mobile/11D167 Safari/9537.53"
+	rxresp
+	expect resp.status == 200
+	expect resp.body ~ "51Degrees Javascript not available"
+	txreq -url "/overrides" -hdr "User-Agent: Mozilla/5.0 (iPhone; CPU iPhone OS 7_1 like Mac OS X) AppleWebKit/537.51.2 (KHTML, like Gecko) Version/7.0 Mobile/11D167 Safari/9537.53"
+	rxresp
+	expect resp.status == 200
+	expect resp.http.x-screenpixelswidth ~ "^[0-9]+$"
+	expect resp.http.X-Enterprise ~ {https://51degrees\.com/contact-us\?}
+	expect resp.http.Access-Control-Expose-Headers == "*"
+} -run
+
+${vcache} v4 -cliexpect "Child has not panicked" "panic.show"
+${vcache} v5 -cliexpect "Child has not panicked" "panic.show"

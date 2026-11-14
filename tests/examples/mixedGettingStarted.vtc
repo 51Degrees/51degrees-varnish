@@ -48,6 +48,10 @@ client c1 {
 	expect resp.status == 200
 	expect resp.http.x-ismobile == "True"
 	expect resp.http.x-asn == {\"BBC\":1}
+	# The location properties are only in the Enterprise data file, so on
+	# the ASN file they read N/A and x-enterprise links to ask for a copy.
+	expect resp.http.x-location == "N/A,N/A,N/A"
+	expect resp.http.x-enterprise ~ {https://51degrees\.com/contact-us\?}
 } -run
 
 ${vcache} v1 -cliexpect "Child has not panicked" "panic.show"

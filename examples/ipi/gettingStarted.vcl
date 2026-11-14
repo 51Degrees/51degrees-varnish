@@ -6,7 +6,10 @@ Shows how to look up IP Intelligence properties for an IP address.
 This example is available in full on [GitHub](https://github.com/51Degrees/51degrees-varnish/blob/main/examples/ipi/gettingStarted.vcl).
 
 The example uses the ASN data file, which has the properties `AsnName` and
-`Asn`. The Lite and Enterprise data files have more. From the repository folder,
+`Asn`. The Lite and Enterprise data files have more. The example also asks for
+`Country`, `Latitude` and `Longitude`, which only the Enterprise data file has.
+On a free data file each reads N/A, and the x-enterprise header says where to
+ask for a copy of the Enterprise data file. From the repository folder,
 `sh cxx/data/get-data-files.sh 51Degrees-IPIV4AsnIpiV41.ipi` downloads the ASN
 file to `cxx/data/ip-intelligence/51Degrees-IPIV4AsnIpiV41.ipi`. The path to the
 data file needs to be updated before running the example.
@@ -26,6 +29,8 @@ HTTP/1.1 200 OK
 ...
 x-asn: <the name of the network the client address belongs to>
 x-asn-real: \"BBC\":1
+x-location-real: N/A,N/A,N/A
+x-enterprise: Some of these properties need the Enterprise data file. Contact us for a copy at https://51degrees.com/contact-us?utm_source=code&utm_medium=example&utm_campaign=51degrees-varnish&utm_content=examples-ipi-gettingstarted-vcl&utm_term=enterprise-data-file
 ...
 ```
 Values take the form `"value":weight`, where the weight shows the confidence in
@@ -43,15 +48,23 @@ backend default {
 sub vcl_recv {
 	set req.http.x-asn = fiftyonedegrees_ipi.match("AsnName");
 	set req.http.x-asn-real = fiftyonedegrees_ipi.match("AsnName", req.http.X-Real-IP);
+	// Country, Latitude and Longitude are only in the Enterprise data file,
+	// and read N/A on a free one.
+	set req.http.x-location-real = fiftyonedegrees_ipi.match("Country,Latitude,Longitude", req.http.X-Real-IP);
 }
 
 sub vcl_deliver {
 	set resp.http.x-asn = req.http.x-asn;
 	set resp.http.x-asn-real = req.http.x-asn-real;
+	set resp.http.x-location-real = req.http.x-location-real;
+	// On a free data file, say where to ask for the Enterprise data file.
+	if (req.http.x-location-real ~ "N/A") {
+		set resp.http.x-enterprise = "Some of these properties need the Enterprise data file. Contact us for a copy at https://51degrees.com/contact-us?utm_source=code&utm_medium=example&utm_campaign=51degrees-varnish&utm_content=examples-ipi-gettingstarted-vcl&utm_term=enterprise-data-file";
+	}
 }
 
 sub vcl_init {
-	fiftyonedegrees_ipi.set_properties("AsnName,Asn");
+	fiftyonedegrees_ipi.set_properties("AsnName,Asn,Country,Latitude,Longitude");
 	fiftyonedegrees_ipi.start("/etc/varnish/51Degrees-IPIV4AsnIpiV41.ipi");
 }
 

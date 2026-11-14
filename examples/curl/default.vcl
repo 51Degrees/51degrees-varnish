@@ -26,6 +26,11 @@ sub vcl_synth {
 	set resp.http.x-browser-version = fiftyonedegrees.match_all("BrowserVersion");
 	set resp.http.x-is-mobile = fiftyonedegrees.match_all("IsMobile");
 	set resp.http.x-asn = fiftyonedegrees_ipi.match("AsnName", req.http.X-Real-IP);
+	// DeviceType is only in the Enterprise data file, and reads N/A on the
+	// Lite one. Then x-enterprise says where to ask for a copy.
+	if (resp.http.x-device-type ~ "N/A") {
+		set resp.http.x-enterprise = "Some of these properties need the Enterprise data file. Contact us for a copy at https://51degrees.com/contact-us?utm_source=code&utm_medium=example&utm_campaign=51degrees-varnish&utm_content=examples-curl-default-vcl&utm_term=enterprise-data-file";
+	}
 	return (deliver);
 }
 

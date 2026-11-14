@@ -143,8 +143,11 @@ to 9.1.0.
 `#    top  TEST ./tests/examples/gettingStarted.vtc passed (0.512)`, with its
 own time. The getting-started examples are `gettingStarted.vtc` for Device
 Detection, `ipiGettingStarted.vtc` for IP Intelligence and
-`mixedGettingStarted.vtc` for both. Each test passes or is skipped, and `make`
-exits with 0.
+`mixedGettingStarted.vtc` for both. `liteDataFile.vtc` checks what the examples
+say about the Enterprise data file on the Lite file, and `enterpriseDataFile.vtc`
+that they say nothing on a paid file. Each runs only when the tests are given
+the file it needs, and is skipped otherwise. Each test passes or is skipped, and
+`make` exits with 0.
 
 The request answers with `200 OK` and the values in the response headers,
 such as `x-is-mobile: True` and `x-asn: \"BBC\":1`, as
@@ -167,9 +170,15 @@ A property the data file does not have reads `N/A`, as `x-device-type` does
 here, because the Lite file has no DeviceType. IP Intelligence values take the
 form `"value":weight`, with each double quote escaped by a backslash.
 
-The paid data files have many more properties, as the
-[pricing page](https://51degrees.com/pricing?utm_source=github&utm_medium=docs&utm_campaign=51degrees-varnish&utm_content=agents.md&utm_term=correct-output)
-describes.
+The examples ask for some properties only the Enterprise data file has, such as
+HardwareVendor, HardwareName and DeviceType, or Country, Latitude and Longitude.
+When they read `N/A`, an `x-enterprise` header, or a note on the example's page,
+says where to ask for a copy of the Enterprise data file, so the Docker image
+built from these changes also sends `x-enterprise`.
+
+The Enterprise data files have many more properties.
+[Contact us](https://51degrees.com/contact-us?utm_source=github&utm_medium=docs&utm_campaign=51degrees-varnish&utm_content=agents.md&utm_term=correct-output)
+for a copy.
 
 ### Cloud examples
 

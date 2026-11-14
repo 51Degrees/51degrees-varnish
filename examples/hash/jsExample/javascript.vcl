@@ -12,6 +12,17 @@ The path to the data file needs to be updated before running the example.
 
 Start Varnish listening on port 8888 with this file, then open index.html from this
 folder in a browser. It shows the width of the screen.
+
+The example needs ScreenPixelsWidthJavascript, which only the Enterprise data
+file has. The free Lite data file has ScreenPixelsWidth, so /overrides gives
+the width the file holds for the User-Agent, but /51D.js returns a comment
+saying the Javascript is not available, so the page cannot send the browser's
+own width. Then /overrides also gives an X-Enterprise header, which the page
+shows, saying where to ask for a copy of the Enterprise data file:
+```
+X-Enterprise: ScreenPixelsWidthJavascript needs the Enterprise data file. Contact us for a copy at https://51degrees.com/contact-us?utm_source=code&utm_medium=example&utm_campaign=51degrees-varnish&utm_content=examples-hash-jsexample-javascript-vcl&utm_term=enterprise-data-file
+```
+With the Enterprise data file there is no X-Enterprise header.
 */
 vcl 4.0;
 
@@ -39,6 +50,12 @@ sub vcl_synth {
 		set resp.http.Access-Control-Allow-Headers = "*";
 		set resp.http.Access-Control-Expose-Headers = "*";
 		set resp.http.x-screenpixelswidth = fiftyonedegrees.match_all("ScreenPixelsWidth");
+		// ScreenPixelsWidthJavascript is only in the Enterprise data file, and
+		// reads N/A on a free one. Then X-Enterprise says where to ask for a
+		// copy.
+		if (fiftyonedegrees.match_all("ScreenPixelsWidthJavascript") == "N/A") {
+			set resp.http.X-Enterprise = "ScreenPixelsWidthJavascript needs the Enterprise data file. Contact us for a copy at https://51degrees.com/contact-us?utm_source=code&utm_medium=example&utm_campaign=51degrees-varnish&utm_content=examples-hash-jsexample-javascript-vcl&utm_term=enterprise-data-file";
+		}
 		return (deliver);
 	}
 }
