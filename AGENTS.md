@@ -58,9 +58,10 @@ are not stored in this repository. The `cxx` submodule holds the
 [data](https://github.com/51Degrees/data) repository as `cxx/data`, which has a
 link to each file, and a script downloads them into `cxx/data/device-detection`
 and `cxx/data/ip-intelligence`, where the default data file paths in
-`configure.ac` (`datafile=` and `datafileipi=`) point. Nothing in the build
-downloads a file, so download the Device Detection Lite file and the IP
-Intelligence ASN file first.
+`configure.ac` (`datafile=` and `datafileipi=`) point. `make check` downloads
+the two it uses by default when they are missing, and never a file named any
+other way. To run an example by hand, download the Device Detection Lite file
+and the IP Intelligence ASN file first.
 
 ```
 sh cxx/data/get-data-files.sh 51Degrees-LiteV4.1.hash 51Degrees-IPIV4AsnIpiV41.ipi

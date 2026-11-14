@@ -36,10 +36,24 @@ endif
 datafile = $(or $(51DEGREES_DD_PATH),@FIFTYONEDEGREES_DATAFILE_ABSOLUTE@)
 datafile_ipi = $(or $(51DEGREES_IPI_PATH),@FIFTYONEDEGREES_DATAFILE_IPI_ABSOLUTE@)
 
+# A fresh clone has no data files. When a file in use is the free one that
+# configure names by default and it is missing, the data repository's script
+# downloads it. A file named any other way is never downloaded.
+default_datafile = $(abs_top_builddir)/cxx/data/device-detection/51Degrees-LiteV4.1.hash
+default_datafile_ipi = $(abs_top_builddir)/cxx/data/ip-intelligence/51Degrees-IPIV4AsnIpiV41.ipi
+get_data_files = sh $(abs_top_srcdir)/cxx/data/get-data-files.sh -s examples-51degrees-varnish
+
+.PHONY: data-files
+data-files:
+	@if [ "$(datafile)" = "$(default_datafile)" ] && [ ! -f "$(datafile)" ]; then \
+		$(get_data_files) 51Degrees-LiteV4.1.hash; fi
+	@if [ "$(datafile_ipi)" = "$(default_datafile_ipi)" ] && [ ! -f "$(datafile_ipi)" ]; then \
+		$(get_data_files) 51Degrees-IPIV4AsnIpiV41.ipi; fi
+
 EXAMPLE_TESTS = $(top_srcdir)/tests/examples/*.vtc
 .PHONY: $(EXAMPLE_TESTS)
 
-$(top_srcdir)/tests/examples/*.vtc:
+$(top_srcdir)/tests/examples/*.vtc: data-files
 	@VARNISHTEST@ -Dvarnishd=@VARNISHD@ -Dvcache=@VCACHE@ -Dvmod_ipi_datafile=$(datafile_ipi) -Dvmod_fod_datafile=$(datafile) -Dvmod_topbuild=$(abs_top_builddir) -Dvmod_topsrc=$(abs_top_srcdir) $@ \
 	|| EC=$$?; if [ "$$EC" != "77" ] ; then (exit $$EC) ; fi;
 

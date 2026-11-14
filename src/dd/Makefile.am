@@ -75,9 +75,16 @@ vcc_if.h: @VMODTOOL@ $(builddir)/vmod_fiftyonedegrees.vcc
 	@VMODTOOL@ $(builddir)/vmod_fiftyonedegrees.vcc
 
 VMOD_TESTS = $(top_srcdir)/src/dd/tests/*.vtc
+
+# Downloads the free data files when a fresh clone lacks them (see the top
+# Makefile.am).
+.PHONY: data-files
+data-files:
+	@$(MAKE) -C $(top_builddir) data-files
+
 .PHONY: $(VMOD_TESTS)
 
-$(top_srcdir)/src/dd/tests/*.vtc: libvmod_fiftyonedegrees.la
+$(top_srcdir)/src/dd/tests/*.vtc: libvmod_fiftyonedegrees.la data-files
 	@VARNISHTEST@ -Dvarnishd=@VARNISHD@ -Dvcache=@VCACHE@ -Dvmod_fod_datafile=$(datafile) -Dvmod_topbuild=$(abs_top_builddir) $@ $(testargs) \
 	|| EC=$$?; if [ "$$EC" != "77" ] ; then (exit $$EC) ; fi;
 
