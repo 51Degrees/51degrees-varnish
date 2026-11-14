@@ -1,0 +1,86 @@
+name: Temporary timing of main against the release head
+
+on:
+  push:
+    branches:
+      - tmp/timing-varnish
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: pwsh
+
+env:
+  HEAD_REF: rc
+  ROUNDS: 10
+
+jobs:
+  assets:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          repository: 51Degrees/common-ci
+      - name: Fetch the assets
+        env:
+          KEY: ${{ secrets.DEVICE_DETECTION_KEY }}
+        run: ./steps/fetch-assets.ps1 -DeviceDetection $env:KEY -Assets 'TAC-HashV41.hash','20000 Evidence Records.yml'
+      - uses: actions/cache/save@v5
+        with:
+          key: tmp-timing-varnish-${{ github.run_id }}
+          path: assets
+
+  timing:
+    needs: assets
+    runs-on: ubuntu-24.04
+    timeout-minutes: 150
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          path: self
+      - uses: actions/cache/restore@v5
+        with:
+          key: tmp-timing-varnish-${{ github.run_id }}
+          path: assets
+          fail-on-cache-miss: true
+      - name: Clone main and the head
+        shell: bash
+        run: |
+          set -e
+          for v in main:main head:$HEAD_REF; do
+            name=${v%%:*}
+            ref=${v##*:}
+            git clone -q --branch "$ref" --recurse-submodules --shallow-submodules https://github.com/51Degrees/51degrees-varnish "$name"
+            git -C "$name" log -1 --format="$name at %H %s"
+            git -C "$name/cxx" log -1 --format="$name cxx at %H %s"
+          done
+          nproc
+      - name: Fetch the free data files
+        run: |
+          foreach ($name in 'main', 'head') {
+            $global:LASTEXITCODE = 0
+            & "./$name/cxx/data/get-data-files.ps1" 51Degrees-LiteV4.1.hash 51Degrees-IPIV4AsnIpiV41.ipi
+            if ($LASTEXITCODE -ne 0) { throw "The free data files were not downloaded for $name" }
+          }
+      - name: Set up as CI does
+        run: ./head/ci/setup-environment.ps1 -VarnishVersion 9.1.0
+      - name: Build both as CI does
+        run: |
+          ./main/ci/build-project.ps1 *> build-main.log
+          ./head/ci/build-project.ps1 *> build-head.log
+          Get-ChildItem main/src/dd/.libs/*.so, main/src/ipi/.libs/*.so, head/src/dd/.libs/*.so, head/src/ipi/.libs/*.so | ForEach-Object { $_.FullName }
+      - name: Build the harness
+        shell: bash
+        run: |
+          set -e
+          sudo apt-get -y install cmake libapr1-dev libaprutil1-dev > /dev/null
+          mkdir -p head/tests/performance/build
+          cd head/tests/performance/build
+          cmake .. > cmake.log 2>&1
+          cmake --build . > build.log 2>&1 || { tail -30 build.log; exit 1; }
+      - name: Measure
+        shell: bash
+        run: bash self/.github/timing-varnish/perf.sh "$PWD" "$ROUNDS"
