@@ -3,6 +3,9 @@
     'use-strict';
 	var responseText = 'not found';
 
+	// The note the server adds when the data file lacks the properties.
+	var enterpriseNote = null;
+
 	var completed = false;
 
 	// changeFuncs is an array of functions. When onChange is called and passed
@@ -113,6 +116,7 @@
 			console.log("Request completed");
             // Get the response body from the request.
             var responseHeader = xhr.getResponseHeader('x-screenpixelswidth');
+            enterpriseNote = xhr.getResponseHeader('x-enterprise');
 			console.log(xhr);
 			console.log(xhr.getAllResponseHeaders());
 			
@@ -136,6 +140,10 @@
         // Send the cookie parameters as the POST body.
 		xhr.send();
     }
+
+	this.enterpriseNote = function() {
+		return enterpriseNote;
+	}
 
 	this.onChange = function(resolve) {
 		changeFuncs.push(resolve);
@@ -165,9 +173,13 @@ var fod = new fiftyoneDegreesManager();
 window.onload = function() {
 	fod.complete(function (data) {
 		document.getElementById('screenpixelswidth').innerHTML = "Screen Pixels Width: <span id=widthvalue style=\"font-weight: bold\">" + data + "</span>";
+		if (fod.enterpriseNote()) {
+			document.getElementById('enterprise').textContent = fod.enterpriseNote();
+		}
 	});
 }
 </script>
 <body>
 <p id=screenpixelswidth></p>
+<p id=enterprise></p>
 </body> 
