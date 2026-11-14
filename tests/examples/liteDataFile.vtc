@@ -30,6 +30,9 @@ server s1 -repeat 20 {
 	txresp
 } -start
 
+# Each example runs in a Varnish of its own, which stops before the next starts,
+# as each of the other example tests runs one.
+
 shell {
 	sed -e 's#/etc/varnish/51Degrees-LiteV4.1.hash#${vmod_fod_datafile}#' \
 		-e 's#/etc/varnish/51Degrees-Enterprise-HashV41.hash#${vmod_fod_datafile}#' \
@@ -44,6 +47,18 @@ shell {
 ${vcache} v1 -arg "-p vmod_path=${vmod_topbuild}/src/dd/.libs:${vmod_topbuild}/src/ipi/.libs" -vcl+backend {} -start
 ${vcache} v1 -cliok "vcl.load example ${tmpdir}/example1.vcl"
 ${vcache} v1 -cliok "vcl.use example"
+
+client c1 -connect ${v1_sock} {
+	txreq -hdr "User-Agent: Mozilla/5.0 (iPhone; CPU iPhone OS 7_1 like Mac OS X) AppleWebKit/537.51.2 (KHTML, like Gecko) Version/7.0 Mobile/11D167 Safari/9537.53"
+	rxresp
+	expect resp.status == 200
+	expect resp.http.X-IsMobile == "True"
+	expect resp.http.X-Hardware == "N/A,N/A,N/A"
+	expect resp.http.X-Enterprise ~ {https://51degrees\.com/contact-us\?}
+} -run
+
+${vcache} v1 -cliexpect "Child has not panicked" "panic.show"
+${vcache} v1 -stop
 
 shell {
 	sed -e 's#/etc/varnish/51Degrees-LiteV4.1.hash#${vmod_fod_datafile}#' \
@@ -60,6 +75,17 @@ ${vcache} v2 -arg "-p vmod_path=${vmod_topbuild}/src/dd/.libs:${vmod_topbuild}/s
 ${vcache} v2 -cliok "vcl.load example ${tmpdir}/example2.vcl"
 ${vcache} v2 -cliok "vcl.use example"
 
+client c2 -connect ${v2_sock} {
+	txreq -hdr "X-Real-IP: 212.58.224.22" -hdr "User-Agent: Mozilla/5.0 (iPhone; CPU iPhone OS 7_1 like Mac OS X) AppleWebKit/537.51.2 (KHTML, like Gecko) Version/7.0 Mobile/11D167 Safari/9537.53"
+	rxresp
+	expect resp.status == 200
+	expect resp.http.x-device-type == "N/A"
+	expect resp.http.x-enterprise ~ {https://51degrees\.com/contact-us\?}
+} -run
+
+${vcache} v2 -cliexpect "Child has not panicked" "panic.show"
+${vcache} v2 -stop
+
 shell {
 	sed -e 's#/etc/varnish/51Degrees-LiteV4.1.hash#${vmod_fod_datafile}#' \
 		-e 's#/etc/varnish/51Degrees-Enterprise-HashV41.hash#${vmod_fod_datafile}#' \
@@ -74,6 +100,17 @@ shell {
 ${vcache} v3 -arg "-p vmod_path=${vmod_topbuild}/src/dd/.libs:${vmod_topbuild}/src/ipi/.libs" -vcl+backend {} -start
 ${vcache} v3 -cliok "vcl.load example ${tmpdir}/example3.vcl"
 ${vcache} v3 -cliok "vcl.use example"
+
+client c3 -connect ${v3_sock} {
+	txreq -hdr "User-Agent: Mozilla/5.0 (iPhone; CPU iPhone OS 7_1 like Mac OS X) AppleWebKit/537.51.2 (KHTML, like Gecko) Version/7.0 Mobile/11D167 Safari/9537.53"
+	rxresp
+	expect resp.status == 200
+	expect resp.body ~ "Hardware vendor: N/A"
+	expect resp.body ~ {<a href="https://51degrees\.com/contact-us\?[^"]*">Contact us</a>}
+} -run
+
+${vcache} v3 -cliexpect "Child has not panicked" "panic.show"
+${vcache} v3 -stop
 
 shell {
 	sed -e 's#/etc/varnish/51Degrees-LiteV4.1.hash#${vmod_fod_datafile}#' \
@@ -90,6 +127,16 @@ ${vcache} v4 -arg "-p vmod_path=${vmod_topbuild}/src/dd/.libs:${vmod_topbuild}/s
 ${vcache} v4 -cliok "vcl.load example ${tmpdir}/example4.vcl"
 ${vcache} v4 -cliok "vcl.use example"
 
+client c4 -connect ${v4_sock} {
+	txreq -hdr "User-Agent: Mozilla/5.0 (iPhone; CPU iPhone OS 7_1 like Mac OS X) AppleWebKit/537.51.2 (KHTML, like Gecko) Version/7.0 Mobile/11D167 Safari/9537.53"
+	rxresp
+	expect resp.status == 200
+	expect resp.body ~ {<a href="https://51degrees\.com/contact-us\?[^"]*">Contact us</a>}
+} -run
+
+${vcache} v4 -cliexpect "Child has not panicked" "panic.show"
+${vcache} v4 -stop
+
 shell {
 	sed -e 's#/etc/varnish/51Degrees-LiteV4.1.hash#${vmod_fod_datafile}#' \
 		-e 's#/etc/varnish/51Degrees-Enterprise-HashV41.hash#${vmod_fod_datafile}#' \
@@ -105,41 +152,6 @@ ${vcache} v5 -arg "-p vmod_path=${vmod_topbuild}/src/dd/.libs:${vmod_topbuild}/s
 ${vcache} v5 -cliok "vcl.load example ${tmpdir}/example5.vcl"
 ${vcache} v5 -cliok "vcl.use example"
 
-client c1 -connect ${v1_sock} {
-	txreq -hdr "User-Agent: Mozilla/5.0 (iPhone; CPU iPhone OS 7_1 like Mac OS X) AppleWebKit/537.51.2 (KHTML, like Gecko) Version/7.0 Mobile/11D167 Safari/9537.53"
-	rxresp
-	expect resp.status == 200
-	expect resp.http.X-IsMobile == "True"
-	expect resp.http.X-Hardware == "N/A,N/A,N/A"
-	expect resp.http.X-Enterprise ~ {https://51degrees\.com/contact-us\?}
-} -run
-
-client c2 -connect ${v2_sock} {
-	txreq -hdr "X-Real-IP: 212.58.224.22" -hdr "User-Agent: Mozilla/5.0 (iPhone; CPU iPhone OS 7_1 like Mac OS X) AppleWebKit/537.51.2 (KHTML, like Gecko) Version/7.0 Mobile/11D167 Safari/9537.53"
-	rxresp
-	expect resp.status == 200
-	expect resp.http.x-device-type == "N/A"
-	expect resp.http.x-enterprise ~ {https://51degrees\.com/contact-us\?}
-} -run
-
-client c3 -connect ${v3_sock} {
-	txreq -hdr "User-Agent: Mozilla/5.0 (iPhone; CPU iPhone OS 7_1 like Mac OS X) AppleWebKit/537.51.2 (KHTML, like Gecko) Version/7.0 Mobile/11D167 Safari/9537.53"
-	rxresp
-	expect resp.status == 200
-	expect resp.body ~ "Hardware vendor: N/A"
-	expect resp.body ~ {<a href="https://51degrees\.com/contact-us\?[^"]*">Contact us</a>}
-} -run
-
-client c4 -connect ${v4_sock} {
-	txreq -hdr "User-Agent: Mozilla/5.0 (iPhone; CPU iPhone OS 7_1 like Mac OS X) AppleWebKit/537.51.2 (KHTML, like Gecko) Version/7.0 Mobile/11D167 Safari/9537.53"
-	rxresp
-	expect resp.status == 200
-	expect resp.body ~ {<a href="https://51degrees\.com/contact-us\?[^"]*">Contact us</a>}
-} -run
-
-${vcache} v1 -cliexpect "Child has not panicked" "panic.show"
-${vcache} v2 -cliexpect "Child has not panicked" "panic.show"
-${vcache} v3 -cliexpect "Child has not panicked" "panic.show"
 client c5 -connect ${v5_sock} {
 	txreq -url "/51D.js" -hdr "User-Agent: Mozilla/5.0 (iPhone; CPU iPhone OS 7_1 like Mac OS X) AppleWebKit/537.51.2 (KHTML, like Gecko) Version/7.0 Mobile/11D167 Safari/9537.53"
 	rxresp
@@ -153,8 +165,8 @@ client c5 -connect ${v5_sock} {
 	expect resp.http.Access-Control-Expose-Headers == "*"
 } -run
 
-${vcache} v4 -cliexpect "Child has not panicked" "panic.show"
 ${vcache} v5 -cliexpect "Child has not panicked" "panic.show"
+${vcache} v5 -stop
 
 # The other examples ask for the hardware too.
 shell {
@@ -181,6 +193,7 @@ client c6 -connect ${v6_sock} {
 } -run
 
 ${vcache} v6 -cliexpect "Child has not panicked" "panic.show"
+${vcache} v6 -stop
 
 shell {
 	sed -e 's#/etc/varnish/51Degrees-LiteV4.1.hash#${vmod_fod_datafile}#' \
@@ -206,6 +219,7 @@ client c7 -connect ${v7_sock} {
 } -run
 
 ${vcache} v7 -cliexpect "Child has not panicked" "panic.show"
+${vcache} v7 -stop
 
 shell {
 	sed -e 's#/etc/varnish/51Degrees-LiteV4.1.hash#${vmod_fod_datafile}#' \
@@ -231,6 +245,7 @@ client c8 -connect ${v8_sock} {
 } -run
 
 ${vcache} v8 -cliexpect "Child has not panicked" "panic.show"
+${vcache} v8 -stop
 
 shell {
 	sed -e 's#/etc/varnish/51Degrees-LiteV4.1.hash#${vmod_fod_datafile}#' \
@@ -256,6 +271,7 @@ client c9 -connect ${v9_sock} {
 } -run
 
 ${vcache} v9 -cliexpect "Child has not panicked" "panic.show"
+${vcache} v9 -stop
 
 shell {
 	sed -e 's#/etc/varnish/51Degrees-LiteV4.1.hash#${vmod_fod_datafile}#' \
@@ -281,3 +297,4 @@ client c10 -connect ${v10_sock} {
 } -run
 
 ${vcache} v10 -cliexpect "Child has not panicked" "panic.show"
+${vcache} v10 -stop
