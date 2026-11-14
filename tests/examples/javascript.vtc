@@ -55,6 +55,7 @@ client c1 {
 	rxresp
 	expect resp.status == 200
 	expect resp.http.x-screenpixelswidth == "1234"
+	expect resp.http.X-Enterprise == <undef>
 	expect resp.http.Access-Control-Allow-Origin == "*"
 } -run
 
