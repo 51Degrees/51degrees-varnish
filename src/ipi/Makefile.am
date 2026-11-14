@@ -73,9 +73,16 @@ vcc_if.h: @VMODTOOL@ $(srcdir)/vmod_fiftyonedegrees_ipi.vcc
 	@VMODTOOL@ $(srcdir)/vmod_fiftyonedegrees_ipi.vcc
 
 VMOD_TESTS = $(top_srcdir)/src/ipi/tests/*.vtc
+
+# Downloads the free data files when a fresh clone lacks them (see the top
+# Makefile.am).
+.PHONY: data-files
+data-files:
+	@$(MAKE) -C $(top_builddir) data-files
+
 .PHONY: $(VMOD_TESTS)
 
-$(top_srcdir)/src/ipi/tests/*.vtc: libvmod_fiftyonedegrees_ipi.la
+$(top_srcdir)/src/ipi/tests/*.vtc: libvmod_fiftyonedegrees_ipi.la data-files
 	@VARNISHTEST@ -Dvarnishd=@VARNISHD@ -Dvcache=@VCACHE@ -Dvmod_ipi_datafile=$(datafile_ipi) -Dvmod_fod_datafile=$(datafile) -Dvmod_topbuild=$(abs_top_builddir) -Dvmod_topsrc=$(abs_top_srcdir) $@ \
 	|| EC=$$?; if [ "$$EC" != "77" ] ; then (exit $$EC) ; fi;
 
