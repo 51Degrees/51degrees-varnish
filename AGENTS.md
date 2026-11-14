@@ -58,13 +58,15 @@ are not stored in this repository. The `cxx` submodule holds the
 [data](https://github.com/51Degrees/data) repository as `cxx/data`, which has a
 link to each file, and a script downloads them into `cxx/data/device-detection`
 and `cxx/data/ip-intelligence`, where the default data file paths in
-`configure.ac` (`datafile=` and `datafileipi=`) point. `make check` downloads
-the two it uses by default when they are missing, and never a file named any
-other way. To run an example by hand, download the Device Detection Lite file
-and the IP Intelligence ASN file first.
+`configure.ac` (`datafile=` and `datafileipi=`) point. The IP Intelligence and
+mixed examples use the IP Intelligence Lite file instead of the ASN file, as
+`example_datafile_ipi` in `Makefile.am` says, because they show registration
+properties. `make check` downloads the three it uses by default when they are
+missing, and never a file named any other way. To run an example by hand,
+download them first.
 
 ```
-sh cxx/data/get-data-files.sh 51Degrees-LiteV4.1.hash 51Degrees-IPIV4AsnIpiV41.ipi
+sh cxx/data/get-data-files.sh 51Degrees-LiteV4.1.hash 51Degrees-IPIV4AsnIpiV41.ipi 51Degrees-LiteV41.ipi
 ```
 
 The script keeps a file that is already there.
@@ -73,6 +75,7 @@ The script keeps a file that is already there.
 
 - `cxx/data/device-detection/51Degrees-LiteV4.1.hash` is more than 10 MB.
 - `cxx/data/ip-intelligence/51Degrees-IPIV4AsnIpiV41.ipi` is more than 1 MB.
+- `cxx/data/ip-intelligence/51Degrees-LiteV41.ipi` is more than 100 MB.
 
 ### Build
 
@@ -219,8 +222,8 @@ There are none. The Varnish modules work only on-premise, with a data file.
 - **What CI does not test.** CI's tests use the Lite file that common-ci
   fetches, and the larger paid file, rather than a copy downloaded into
   `cxx/data` (`ci/run-unit-tests.ps1` and `ci/run-integration-tests.ps1`).
-  `ci/fetch-assets.ps1` downloads the ASN file with the data repository's
-  script, as the steps here do. CI does not build the Docker image.
+  `ci/fetch-assets.ps1` downloads the ASN and Lite IP Intelligence files with
+  the data repository's script, as the steps here do. CI does not build the Docker image.
 
 ## Building the modules
 
