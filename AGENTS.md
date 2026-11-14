@@ -132,10 +132,8 @@ docker run -d -p 8080:8080 51d-varnish-curl
 ```
 
 Then send the same request. The image clones `main` from GitHub rather than
-using your checkout, and builds Varnish Cache 8.0.1, which CI does not test.
-The draft pull request
-[#31](https://github.com/51Degrees/51degrees-varnish/pull/31) moves the image
-to 9.1.0.
+using your checkout, and builds Varnish Cache 9.1.0, one of the versions CI
+tests, from its GitHub release after checking its SHA256.
 
 ### Correct output
 
@@ -152,7 +150,9 @@ the file it needs, and is skipped otherwise. Each test passes or is skipped, and
 The request answers with `200 OK` and the values in the response headers,
 such as `x-is-mobile: True` and `x-asn: \"BBC\":1`, as
 `examples/curl/README.md` says. A run of the Docker image on Varnish Cache
-9.1.0, in draft #31, gave these headers.
+9.1.0, in
+[run 43502369747](https://github.com/51Degrees/51degrees-varnish/actions/runs/43502369747),
+gave these headers.
 
 ```
 HTTP/1.1 200 OK
