@@ -1,0 +1,68 @@
+name: Temporary measurement of children lost at stop, sanitizer reports and a plain build
+
+on:
+  push:
+    branches:
+      - tmp/measure-stop3
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  measure:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        copy: [1, 2, 3, 4]
+        arm: [asan, plain]
+    steps:
+      - name: Clone rc
+        run: |
+          git clone --branch rc --recurse-submodules --shallow-submodules https://github.com/51Degrees/51degrees-varnish v
+          git -C v log -1 --format='rc at %H %s'
+      - name: Data files
+        shell: pwsh
+        run: |
+          $global:LASTEXITCODE = 0
+          & ./v/cxx/data/get-data-files.ps1 51Degrees-LiteV4.1.hash 51Degrees-IPIV4AsnIpiV41.ipi
+          if ($LASTEXITCODE -ne 0) { throw "The data files were not downloaded" }
+      - name: Set up as CI does
+        shell: pwsh
+        run: ./v/ci/setup-environment.ps1 -VarnishVersion 9.1.0
+      - name: Build as CI does, and with the sanitizer for the asan arm
+        run: |
+          cd v
+          pwsh ./ci/build-project.ps1 > ../build.log 2>&1 || { tail -20 ../build.log; exit 1; }
+          if [ "${{ matrix.arm }}" = plain ]; then exit 0; fi
+          make clean > /dev/null
+          cflags=$(sed -n 's/^CFLAGS = //p' Makefile)
+          ldflags=$(sed -n 's/^LDFLAGS = //p' Makefile)
+          make CFLAGS="$cflags -fsanitize=address -fno-omit-frame-pointer -O1" LDFLAGS="$ldflags -fsanitize=address" > ../asan-build.log 2>&1 || { tail -20 ../asan-build.log; exit 1; }
+      - name: Run liteDataFile.vtc ten times
+        run: |
+          set +e
+          set +o pipefail
+          cd v
+          lite=$PWD/cxx/data/device-detection/51Degrees-LiteV4.1.hash
+          preload=
+          if [ "${{ matrix.arm }}" = asan ]; then preload=$(gcc -print-file-name=libasan.so); fi
+          rm -f /tmp/asan.*
+          for round in 1 2 3 4 5 6 7 8 9 10; do
+            LD_PRELOAD=$preload ASAN_OPTIONS=detect_leaks=0:detect_odr_violation=0:handle_segv=1:allow_user_segv_handler=0:log_path=/tmp/asan \
+              make tests/examples/liteDataFile.vtc datafile=$lite > ../round-$round.txt 2>&1
+            if [ $? -eq 0 ]; then result=passed; else result=FAILED; fi
+            died=$(grep -E 'Child \([0-9]+\) died' ../round-$round.txt | sed -E 's/.*(v[0-9]+) .*died (signal=[0-9]+).*/\1 \2/' | tr '\n' ' ')
+            echo "MEASURE arm=${{ matrix.arm }} copy=${{ matrix.copy }} round=$round $result died=[$died]"
+          done
+          ls -la /tmp/asan.* 2>/dev/null | head
+          for report in $(ls /tmp/asan.* 2>/dev/null | head -3); do
+            echo "REPORT $report"
+            head -70 "$report"
+          done
+          true
