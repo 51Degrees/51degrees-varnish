@@ -230,8 +230,8 @@ code compiled differently from Device Detection, as the README explains.
 adding the test functions for `--with-config=test`. Git ignores both outputs,
 so change the templates. The module sources build with `-Werror`.
 
-Each example but `examples/hash/config.vcl` has a test in `tests/examples`
-that rewrites the VCL's data file paths and backend and runs it. `make check`
+Each example has a test in `tests/examples` that rewrites the VCL's data
+file paths and backend and runs it. `make check`
 runs them all, so a change to an example needs its test to pass.
 
 ## CI
