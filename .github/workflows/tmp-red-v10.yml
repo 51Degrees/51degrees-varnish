@@ -1,0 +1,24 @@
+name: Temporary red build of the example tests for the Enterprise properties
+
+on:
+  push:
+    branches:
+      - 'tmp/red-v10'
+
+jobs:
+  Build:
+    uses: 51Degrees/common-ci/.github/workflows/nightly-pull-request.yml@main
+    with:
+      repo-name: 51degrees-varnish
+      org-name: 51Degrees
+      pull-request-id: 0
+      dryrun: 'true'
+      branch: tmp/red-v10
+      skip-compare-performance: true
+      full-matrix: true
+      common-ci-ref: tmp/no-macos
+    secrets:
+      token: ${{ secrets.ACCESS_TOKEN }}
+      DeviceDetection: ${{ secrets.DEVICE_DETECTION_KEY }}
+      DeviceDetectionUrl: ${{ secrets.DEVICE_DETECTION_URL }}
+
