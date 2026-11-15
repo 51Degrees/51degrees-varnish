@@ -14,6 +14,9 @@ on:
       - 'cxx'
       - '.github/workflows/docker-example.yml'
   workflow_dispatch:
+  push:
+    branches:
+      - tmp/red-docker-varnish
 
 permissions:
   contents: read

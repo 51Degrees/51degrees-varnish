@@ -24,7 +24,6 @@ sub vcl_synth {
 	set resp.http.x-platform-version = fiftyonedegrees.match_all("PlatformVersion");
 	set resp.http.x-browser-name = fiftyonedegrees.match_all("BrowserName");
 	set resp.http.x-browser-version = fiftyonedegrees.match_all("BrowserVersion");
-	set resp.http.x-is-mobile = fiftyonedegrees.match_all("IsMobile");
 	set resp.http.x-asn = fiftyonedegrees_ipi.match("AsnName", req.http.X-Real-IP);
 	// DeviceType is only in the Enterprise data file, and reads N/A on the
 	// Lite one. Then x-enterprise says where to ask for a copy.
