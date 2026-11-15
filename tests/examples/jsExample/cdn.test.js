@@ -27,15 +27,25 @@ const firefox = require('selenium-webdriver/firefox');
 // Varnish needs to be running with the JavaScript example, and the page served
 // over HTTP, as a page opened from a file cannot keep the cookie the script sets.
 const page = process.env.PAGE_URL || 'http://localhost:8889/index.html';
-const timeoutMilliseconds = 20000;
 
-async function checkWidth(driver) {
+// How long the page has to show the width once it has loaded, and how long
+// each test may take from starting the browser. Starting Firefox on a runner
+// can take more than half a minute.
+const PageWaitMilliseconds = 30000;
+const TestTimeoutMilliseconds = 120000;
+
+// Prints how long the browser took to start and the page to show the width,
+// so that a limit can be set from what the runners take.
+async function checkWidth(name, driver, started) {
 	try {
+		const opened = Date.now();
 		await driver.get(page);
 		const width = await driver.wait(async () => {
 			const found = await driver.findElements(By.id('widthvalue'));
 			return found.length > 0 ? found[0].getText() : false;
-		}, timeoutMilliseconds);
+		}, PageWaitMilliseconds);
+		console.log(`${name} started in ${opened - started} ms and ` +
+			`showed the width in ${Date.now() - opened} ms`);
 		// A real width, which only the browser knows, rather than Unknown.
 		expect(width).toMatch(/^\d+$/);
 	}
@@ -52,19 +62,21 @@ describe('Javascript tests', () => {
 			'--headless=new',
 			'--no-sandbox',
 			'--user-agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36');
+		const started = Date.now();
 		const driver = await new Builder()
 			.forBrowser('chrome')
 			.setChromeOptions(options)
 			.build();
-		await checkWidth(driver);
-	}, timeoutMilliseconds * 2);
+		await checkWidth('Chrome', driver, started);
+	}, TestTimeoutMilliseconds);
 
 	test('Javascript in Firefox', async () => {
 		const options = new firefox.Options().addArguments('-headless');
+		const started = Date.now();
 		const driver = await new Builder()
 			.forBrowser('firefox')
 			.setFirefoxOptions(options)
 			.build();
-		await checkWidth(driver);
-	}, timeoutMilliseconds * 2);
+		await checkWidth('Firefox', driver, started);
+	}, TestTimeoutMilliseconds);
 });
