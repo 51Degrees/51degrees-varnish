@@ -171,6 +171,10 @@ A property the data file does not have reads `N/A`, as `x-device-type` does
 here, because the Lite file has no DeviceType. IP Intelligence values take the
 form `"value":weight`, with each double quote escaped by a backslash.
 
+Each example that answers with headers ends them with `x-find-out-more`, which
+gives the module and engine repositories and the 51degrees.com pages to read
+next. The example pages end with the same section.
+
 The examples ask for some properties only the Enterprise data file has, such as
 HardwareVendor, HardwareName and DeviceType, or Country, Latitude and Longitude.
 When they read `N/A`, an `x-enterprise` header, or a note on the example's page,
