@@ -41,6 +41,7 @@ ${vcache} v1 -cliok "vcl.use example"
 client c1 {
 	txreq -hdr "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.97 Safari/537.36"
 	rxresp
+	expect resp.http.X-Find-Out-More == {This module is at https://github.com/51Degrees/51degrees-varnish and the engine it uses at https://github.com/51Degrees/51degrees-cxx. Read about device detection at https://51degrees.com/device-detection?utm_source=code&utm_medium=example&utm_campaign=51degrees-varnish&utm_content=examples-hash-config-vcl&utm_term=device-detection and about data files and pricing at https://51degrees.com/pricing?utm_source=code&utm_medium=example&utm_campaign=51degrees-varnish&utm_content=examples-hash-config-vcl&utm_term=pricing}
 	expect resp.status == 200
 	expect resp.http.X-Metadata ~ "^False:[0-9]+:[0-9]+:[0-9]+:PREDICTIVE:"
 	expect resp.http.X-Metadata ~ ":[0-9]+-[0-9]+-[0-9]+-[0-9]+$"
