@@ -19,11 +19,14 @@ $repo = (Get-Item $PSScriptRoot/..).FullName
 $assets = "$PWD/assets"
 
 # Repeat the tests with the larger data file, in the folder install-package.ps1
-# built from the release tarball if there is one.
+# built from the release tarball if there is one. That build names the ASN
+# file for the module tests, so the IP Intelligence examples are given the Lite
+# file that fetch-assets.ps1 copies beside it, as a default build gives them.
 $build = (Test-Path "$repo/package-build") ? "$repo/package-build" : $repo
 & $PSScriptRoot/run-vtc-tests.ps1 -BuildPath $build -SuiteName $Name `
     -ResultsFile "$repo/test-results/integration/$Name.xml" `
-    -MakeArguments "datafile=$assets/TAC-HashV41.hash"
+    -MakeArguments "datafile=$assets/TAC-HashV41.hash", `
+        "example_datafile_ipi=$repo/cxx/data/ip-intelligence/51Degrees-LiteV41.ipi"
 $testsExit = $LASTEXITCODE
 
 Write-Output "Running the browser test of the JavaScript example"
