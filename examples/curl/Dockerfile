@@ -17,7 +17,10 @@ RUN curl -fLsS -o /tmp/varnish.tgz https://github.com/varnish/varnish/releases/d
 	&& cd /tmp/varnish && ./configure --without-jemalloc --with-sphinx-build=true && make -j4 && make install && ldconfig \
 	&& rm -rf /tmp/varnish /tmp/varnish.tgz
 
-RUN git clone --recurse-submodules https://github.com/51Degrees/51degrees-varnish .
+# The branch to build, main unless --build-arg BRANCH=<name> says otherwise, so
+# a change can be checked before it reaches main.
+ARG BRANCH=main
+RUN git clone --branch ${BRANCH} --recurse-submodules https://github.com/51Degrees/51degrees-varnish .
 
 # The data submodule holds a link to each data file rather than the file, so
 # this step downloads the two data files that default.vcl loads.

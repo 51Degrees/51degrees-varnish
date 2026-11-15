@@ -136,8 +136,9 @@ docker run -d -p 8080:8080 51d-varnish-curl
 ```
 
 Then send the same request. The image clones `main` from GitHub rather than
-using your checkout, and builds Varnish Cache 9.1.0, one of the versions CI
-tests, from its GitHub release after checking its SHA256.
+using your checkout, or the branch `--build-arg BRANCH=<name>` names, and
+builds Varnish Cache 9.1.0, one of the versions CI tests, from its GitHub
+release after checking its SHA256.
 
 ### Correct output
 
@@ -228,8 +229,10 @@ There are none. The Varnish modules work only on-premise, with a data file.
   downloading them, and copies them into `cxx/data` where a fresh clone keeps
   them. The unit tests then run `make check` with nothing set
   (`ci/run-unit-tests.ps1`), and the integration tests again with the larger
-  paid file (`ci/run-integration-tests.ps1`). CI does not build the Docker
-  image.
+  paid file (`ci/run-integration-tests.ps1`). The Docker example has its own
+  workflow, `.github/workflows/docker-example.yml`, which builds the image
+  from a pull request's branch when the pull request changes the example or
+  what the image builds, and checks the README's request and `curl.sh`.
 
 ## Building the modules
 
