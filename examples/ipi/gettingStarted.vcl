@@ -32,6 +32,7 @@ x-registered-name: <the registered name of the network the client address belong
 x-registered-name-real: \"UK-BBC-991005\":1
 x-location-real: N/A,N/A,N/A
 x-enterprise: Some of these properties need the Enterprise data file. Contact us for a copy at https://51degrees.com/contact-us?utm_source=code&utm_medium=example&utm_campaign=51degrees-varnish&utm_content=examples-ipi-gettingstarted-vcl&utm_term=enterprise-data-file
+x-find-out-more: This module is at https://github.com/51Degrees/51degrees-varnish and the engine it uses at https://github.com/51Degrees/51degrees-cxx. Read about IP intelligence at https://51degrees.com/ip-intelligence?utm_source=code&utm_medium=example&utm_campaign=51degrees-varnish&utm_content=examples-ipi-gettingstarted-vcl&utm_term=ip-intelligence and about data files and pricing at https://51degrees.com/pricing?utm_source=code&utm_medium=example&utm_campaign=51degrees-varnish&utm_content=examples-ipi-gettingstarted-vcl&utm_term=pricing
 ...
 ```
 Values take the form `"value":weight`, where the weight shows the confidence in
@@ -62,21 +63,11 @@ sub vcl_deliver {
 	if (req.http.x-location-real ~ "N/A") {
 		set resp.http.x-enterprise = "Some of these properties need the Enterprise data file. Contact us for a copy at https://51degrees.com/contact-us?utm_source=code&utm_medium=example&utm_campaign=51degrees-varnish&utm_content=examples-ipi-gettingstarted-vcl&utm_term=enterprise-data-file";
 	}
+	// Say where to find out more, after the other headers.
+	set resp.http.x-find-out-more = "This module is at https://github.com/51Degrees/51degrees-varnish and the engine it uses at https://github.com/51Degrees/51degrees-cxx. Read about IP intelligence at https://51degrees.com/ip-intelligence?utm_source=code&utm_medium=example&utm_campaign=51degrees-varnish&utm_content=examples-ipi-gettingstarted-vcl&utm_term=ip-intelligence and about data files and pricing at https://51degrees.com/pricing?utm_source=code&utm_medium=example&utm_campaign=51degrees-varnish&utm_content=examples-ipi-gettingstarted-vcl&utm_term=pricing";
 }
 
 sub vcl_init {
 	fiftyonedegrees_ipi.set_properties("RegisteredName,RegisteredCountry,RegisteredOwner,Country,Latitude,Longitude");
 	fiftyonedegrees_ipi.start("/etc/varnish/51Degrees-LiteV41.ipi");
 }
-
-/**
-Find out more
-
-The engine this example uses:
-https://github.com/51Degrees/51degrees-cxx
-The Varnish modules:
-https://github.com/51Degrees/51degrees-varnish
-
-IP Intelligence: https://51degrees.com/ip-intelligence?utm_source=github&utm_medium=example&utm_campaign=51degrees-varnish&utm_content=examples-ipi-gettingstarted-vcl&utm_term=ip-intelligence
-Data files and pricing: https://51degrees.com/pricing?utm_source=github&utm_medium=example&utm_campaign=51degrees-varnish&utm_content=examples-ipi-gettingstarted-vcl&utm_term=pricing
-*/

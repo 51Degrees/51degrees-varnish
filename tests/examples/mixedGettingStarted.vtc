@@ -46,6 +46,7 @@ ${vcache} v1 -cliok "vcl.use example"
 client c1 {
 	txreq -hdr "X-Real-IP: 212.58.224.22" -hdr "User-Agent: Mozilla/5.0 (iPhone; CPU iPhone OS 7_1 like Mac OS X) AppleWebKit/537.51.2 (KHTML, like Gecko) Version/7.0 Mobile/11D167 Safari/9537.53"
 	rxresp
+	expect resp.http.x-find-out-more == {These modules are at https://github.com/51Degrees/51degrees-varnish and the engine they use at https://github.com/51Degrees/51degrees-cxx. Read about device detection at https://51degrees.com/device-detection?utm_source=code&utm_medium=example&utm_campaign=51degrees-varnish&utm_content=examples-mixed-gettingstarted-vcl&utm_term=device-detection, about IP intelligence at https://51degrees.com/ip-intelligence?utm_source=code&utm_medium=example&utm_campaign=51degrees-varnish&utm_content=examples-mixed-gettingstarted-vcl&utm_term=ip-intelligence and about data files and pricing at https://51degrees.com/pricing?utm_source=code&utm_medium=example&utm_campaign=51degrees-varnish&utm_content=examples-mixed-gettingstarted-vcl&utm_term=pricing}
 	expect resp.status == 200
 	expect resp.http.x-ismobile == "True"
 	expect resp.http.x-registered-name == {\"UK-BBC-991005\":1}
