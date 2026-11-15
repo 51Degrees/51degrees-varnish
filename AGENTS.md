@@ -222,8 +222,9 @@ There are none. The Varnish modules work only on-premise, with a data file.
 - **What CI does not test.** CI's tests use the Lite file that common-ci
   fetches, and the larger paid file, rather than a copy downloaded into
   `cxx/data` (`ci/run-unit-tests.ps1` and `ci/run-integration-tests.ps1`).
-  `ci/fetch-assets.ps1` downloads the ASN and Lite IP Intelligence files with
-  the data repository's script, as the steps here do. CI does not build the Docker image.
+  `ci/fetch-assets.ps1` takes the ASN and Lite IP Intelligence files from
+  common-ci's assets, which each run fetches once and caches, and copies them
+  into `cxx/data/ip-intelligence`. CI does not build the Docker image.
 
 ## Building the modules
 
