@@ -121,7 +121,7 @@ The data files used by the tests can also be set when they are run, with `make c
 
 The location of where the module will be installed can also be customized by setting the environment variable `VMOD_DIR` before running the `configure`.
 
-Then run the included tests with the following command. A `test` version and the data files downloaded above are required for this to succeed:
+Then run the included tests with the following command. A `test` version is required for this to succeed. When the free data files that the tests use by default are missing, `make check` downloads them first with the same script, and it never downloads a file named any other way:
 
 ```
 $ make check
