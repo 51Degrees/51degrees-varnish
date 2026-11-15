@@ -31,6 +31,7 @@ shell {
 	sed -e 's#/etc/varnish/51Degrees-LiteV4.1.hash#${vmod_fod_datafile}#' \
 		-e 's#/etc/varnish/51Degrees-Enterprise-HashV41.hash#${vmod_fod_datafile}#' \
 		-e 's#/etc/varnish/51Degrees-IPIV4AsnIpiV41.ipi#${vmod_ipi_datafile}#' \
+		-e 's#/etc/varnish/51Degrees-LiteV41.ipi#${vmod_ipi_example_datafile}#' \
 		-e 's#/app/cxx/data/device-detection/51Degrees-LiteV4.1.hash#${vmod_fod_datafile}#' \
 		-e 's#/app/cxx/data/ip-intelligence/51Degrees-IPIV4AsnIpiV41.ipi#${vmod_ipi_datafile}#' \
 		-e 's#\.host = "127.0.0.1"#.host = "${s1_addr}"#' \
@@ -46,10 +47,10 @@ client c1 {
 	txreq -hdr "X-Real-IP: 212.58.224.22"
 	rxresp
 	expect resp.status == 200
-	expect resp.http.x-asn-real == {\"BBC\":1}
-	expect resp.http.x-asn ~ {^\\".+\\":[0-9.]+$}
+	expect resp.http.x-registered-name-real == {\"UK-BBC-991005\":1}
+	expect resp.http.x-registered-name ~ {^\\".+\\":[0-9.]+$}
 	# The location properties are only in the Enterprise data file, so on
-	# the ASN file they read N/A and x-enterprise links to ask for a copy.
+	# the Lite file they read N/A and x-enterprise links to ask for a copy.
 	expect resp.http.x-location-real == "N/A,N/A,N/A"
 	expect resp.http.x-enterprise ~ {https://51degrees\.com/contact-us\?}
 } -run

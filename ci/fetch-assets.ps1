@@ -6,8 +6,11 @@ $ErrorActionPreference = "Stop"
 
 # Every data file the tests read is an asset, which the run caches once, so a
 # test job restores the files rather than downloading them.
-./steps/fetch-assets.ps1 -DeviceDetection:$DeviceDetection -DeviceDetectionUrl:$DeviceDetectionUrl -Assets "TAC-HashV41.hash", "51Degrees-LiteV4.1.hash", "20000 Evidence Records.yml", "51Degrees-IPIV4AsnIpiV41.ipi"
+./steps/fetch-assets.ps1 -DeviceDetection:$DeviceDetection -DeviceDetectionUrl:$DeviceDetectionUrl -Assets "TAC-HashV41.hash", "51Degrees-LiteV4.1.hash", "20000 Evidence Records.yml", "51Degrees-IPIV4AsnIpiV41.ipi", "51Degrees-LiteIpiV41.ipi"
 
-# The IP Intelligence tests read the ASN file where a fresh clone's data
-# submodule keeps it, which is where configure looks by default.
-Copy-Item "assets/51Degrees-IPIV4AsnIpiV41.ipi" "$PSScriptRoot/../cxx/data/ip-intelligence"
+# The IP Intelligence module tests read the ASN file, and the IP Intelligence
+# and mixed examples the Lite file, where a fresh clone's data submodule keeps
+# them, which is where the build looks by default.
+$ipIntelligence = "$PSScriptRoot/../cxx/data/ip-intelligence"
+Copy-Item "assets/51Degrees-IPIV4AsnIpiV41.ipi" $ipIntelligence
+Copy-Item "assets/51Degrees-LiteIpiV41.ipi" "$ipIntelligence/51Degrees-LiteV41.ipi"

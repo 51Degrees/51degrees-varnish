@@ -6,12 +6,13 @@ use both for the same request.
 
 This example is available in full on [GitHub](https://github.com/51Degrees/51degrees-varnish/blob/main/examples/mixed/gettingStarted.vcl).
 
-The example uses the Lite device detection data file and the ASN IP Intelligence
-data file. From the repository folder,
-`sh cxx/data/get-data-files.sh 51Degrees-LiteV4.1.hash 51Degrees-IPIV4AsnIpiV41.ipi`
+The example uses the free Lite device detection data file and the free Lite IP
+Intelligence data file, which has the property `RegisteredName`. From the
+repository folder,
+`sh cxx/data/get-data-files.sh 51Degrees-LiteV4.1.hash 51Degrees-LiteV41.ipi`
 downloads them to `cxx/data/device-detection/51Degrees-LiteV4.1.hash` and
-`cxx/data/ip-intelligence/51Degrees-IPIV4AsnIpiV41.ipi`. The paths to the data
-files need to be updated before running the example.
+`cxx/data/ip-intelligence/51Degrees-LiteV41.ipi`. The paths to the data files
+need to be updated before running the example.
 
 The example also asks for HardwareVendor, HardwareName and DeviceType, and for
 Country, Latitude and Longitude, which only the Enterprise data files have. On
@@ -27,7 +28,7 @@ Expected output:
 HTTP/1.1 200 OK
 ...
 x-ismobile: True
-x-asn: \"BBC\":1
+x-registered-name: \"UK-BBC-991005\":1
 x-hardware: N/A,N/A,N/A
 x-location: N/A,N/A,N/A
 x-enterprise: Some of these properties need the Enterprise data files. Contact us for a copy at https://51degrees.com/contact-us?utm_source=code&utm_medium=example&utm_campaign=51degrees-varnish&utm_content=examples-mixed-gettingstarted-vcl&utm_term=enterprise-data-file
@@ -46,7 +47,7 @@ backend default {
 
 sub vcl_recv {
 	set req.http.x-ismobile = fiftyonedegrees.match_all("IsMobile");
-	set req.http.x-asn = fiftyonedegrees_ipi.match("AsnName", req.http.X-Real-IP);
+	set req.http.x-registered-name = fiftyonedegrees_ipi.match("RegisteredName", req.http.X-Real-IP);
 	// The hardware and location properties are only in the Enterprise data
 	// files, and read N/A on the free ones.
 	set req.http.x-hardware = fiftyonedegrees.match_all("HardwareVendor,HardwareName,DeviceType");
@@ -55,7 +56,7 @@ sub vcl_recv {
 
 sub vcl_deliver {
 	set resp.http.x-ismobile = req.http.x-ismobile;
-	set resp.http.x-asn = req.http.x-asn;
+	set resp.http.x-registered-name = req.http.x-registered-name;
 	set resp.http.x-hardware = req.http.x-hardware;
 	set resp.http.x-location = req.http.x-location;
 	// On a free data file, say where to ask for the Enterprise data files.
@@ -66,7 +67,7 @@ sub vcl_deliver {
 
 sub vcl_init {
 	fiftyonedegrees.start("/etc/varnish/51Degrees-LiteV4.1.hash");
-	fiftyonedegrees_ipi.start("/etc/varnish/51Degrees-IPIV4AsnIpiV41.ipi");
+	fiftyonedegrees_ipi.start("/etc/varnish/51Degrees-LiteV41.ipi");
 }
 
 /**

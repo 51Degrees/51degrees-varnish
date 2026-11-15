@@ -89,10 +89,10 @@ Move to the Varnish directory with
 $ cd 51degrees-varnish
 ```
 
-download the Lite device detection file and the ASN IP Intelligence file, which the tests use, with
+download the Lite device detection file, the ASN IP Intelligence file and the Lite IP Intelligence file, which the tests use, with
 
 ```
-$ sh cxx/data/get-data-files.sh 51Degrees-LiteV4.1.hash 51Degrees-IPIV4AsnIpiV41.ipi
+$ sh cxx/data/get-data-files.sh 51Degrees-LiteV4.1.hash 51Degrees-IPIV4AsnIpiV41.ipi 51Degrees-LiteV41.ipi
 ```
 
 and install the module with
@@ -115,7 +115,7 @@ Where `--with-config`  [optional] sets the version that will be built. `release`
 
 `--with-vcache` [optional] sets the project the modules are built for, `varnish` for Varnish Cache or `vinyl` for Vinyl Cache. By default this is Varnish Cache if it is installed, and Vinyl Cache otherwise.
 
-The data files used by the tests can also be set when they are run, with `make check 51DEGREES_DD_PATH=/path/to/file 51DEGREES_IPI_PATH=/path/to/file`.
+The data files used by the tests can also be set when they are run, with `make check 51DEGREES_DD_PATH=/path/to/file 51DEGREES_IPI_PATH=/path/to/file`. With the default IP Intelligence file the module tests use the ASN file and the IP Intelligence and mixed examples the Lite file, which has the registration properties they show. A file named with `51DEGREES_IPI_PATH` is used for both, so for the examples it needs `RegisteredName`, which the Lite and Enterprise files have.
 
 `configure` finds the Varnish headers through pkg-config. To use headers from another folder, set the environment variable `VARNISHSRC` to that folder before running `configure` (for example `export VARNISHSRC=/usr/include/varnish`).
 
@@ -363,7 +363,8 @@ The module reads version 4.6 data files. A data file of another version is refus
 | Data file | Where to get it | Properties |
 | --- | --- | --- |
 | ASN | `sh cxx/data/get-data-files.sh 51Degrees-IPIV4AsnIpiV41.ipi` downloads it to `cxx/data/ip-intelligence/51Degrees-IPIV4AsnIpiV41.ipi` | `AsnName` and `Asn` |
-| Lite and Enterprise | See the [data file options](https://51degrees.com/pricing?utm_source=github&utm_medium=readme&utm_campaign=51degrees-varnish&utm_content=readme.md&utm_term=ip-intelligence-data-files) | Many more, such as `RegisteredName` and `RegisteredCountry` |
+| Lite | `sh cxx/data/get-data-files.sh 51Degrees-LiteV41.ipi` downloads it to `cxx/data/ip-intelligence/51Degrees-LiteV41.ipi` | `RegisteredName`, `RegisteredCountry` and `RegisteredOwner` |
+| Enterprise | See the [data file options](https://51degrees.com/pricing?utm_source=github&utm_medium=readme&utm_campaign=51degrees-varnish&utm_content=readme.md&utm_term=ip-intelligence-data-files) | Many more, such as `Country`, `Latitude` and `Longitude` |
 
 ### The VCL file
 

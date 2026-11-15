@@ -5,14 +5,15 @@ Shows how to look up IP Intelligence properties for an IP address.
 
 This example is available in full on [GitHub](https://github.com/51Degrees/51degrees-varnish/blob/main/examples/ipi/gettingStarted.vcl).
 
-The example uses the ASN data file, which has the properties `AsnName` and
-`Asn`. The Lite and Enterprise data files have more. The example also asks for
+The example uses the free Lite IP Intelligence data file, which has the
+properties `RegisteredName`, `RegisteredCountry` and `RegisteredOwner`. The free
+ASN data file has `AsnName` and `Asn` instead. The example also asks for
 `Country`, `Latitude` and `Longitude`, which only the Enterprise data file has.
 On a free data file each reads N/A, and the x-enterprise header says where to
 ask for a copy of the Enterprise data file. From the repository folder,
-`sh cxx/data/get-data-files.sh 51Degrees-IPIV4AsnIpiV41.ipi` downloads the ASN
-file to `cxx/data/ip-intelligence/51Degrees-IPIV4AsnIpiV41.ipi`. The path to the
-data file needs to be updated before running the example.
+`sh cxx/data/get-data-files.sh 51Degrees-LiteV41.ipi` downloads the Lite file
+to `cxx/data/ip-intelligence/51Degrees-LiteV41.ipi`. The path to the data file
+needs to be updated before running the example.
 
 On a local machine the address of the client is a loopback address, which has no
 useful IP Intelligence, so the second match reads an address from a request
@@ -27,8 +28,8 @@ Expected output:
 ```
 HTTP/1.1 200 OK
 ...
-x-asn: <the name of the network the client address belongs to>
-x-asn-real: \"BBC\":1
+x-registered-name: <the registered name of the network the client address belongs to>
+x-registered-name-real: \"UK-BBC-991005\":1
 x-location-real: N/A,N/A,N/A
 x-enterprise: Some of these properties need the Enterprise data file. Contact us for a copy at https://51degrees.com/contact-us?utm_source=code&utm_medium=example&utm_campaign=51degrees-varnish&utm_content=examples-ipi-gettingstarted-vcl&utm_term=enterprise-data-file
 ...
@@ -46,16 +47,16 @@ backend default {
 }
 
 sub vcl_recv {
-	set req.http.x-asn = fiftyonedegrees_ipi.match("AsnName");
-	set req.http.x-asn-real = fiftyonedegrees_ipi.match("AsnName", req.http.X-Real-IP);
+	set req.http.x-registered-name = fiftyonedegrees_ipi.match("RegisteredName");
+	set req.http.x-registered-name-real = fiftyonedegrees_ipi.match("RegisteredName", req.http.X-Real-IP);
 	// Country, Latitude and Longitude are only in the Enterprise data file,
 	// and read N/A on a free one.
 	set req.http.x-location-real = fiftyonedegrees_ipi.match("Country,Latitude,Longitude", req.http.X-Real-IP);
 }
 
 sub vcl_deliver {
-	set resp.http.x-asn = req.http.x-asn;
-	set resp.http.x-asn-real = req.http.x-asn-real;
+	set resp.http.x-registered-name = req.http.x-registered-name;
+	set resp.http.x-registered-name-real = req.http.x-registered-name-real;
 	set resp.http.x-location-real = req.http.x-location-real;
 	// On a free data file, say where to ask for the Enterprise data file.
 	if (req.http.x-location-real ~ "N/A") {
@@ -64,8 +65,8 @@ sub vcl_deliver {
 }
 
 sub vcl_init {
-	fiftyonedegrees_ipi.set_properties("AsnName,Asn,Country,Latitude,Longitude");
-	fiftyonedegrees_ipi.start("/etc/varnish/51Degrees-IPIV4AsnIpiV41.ipi");
+	fiftyonedegrees_ipi.set_properties("RegisteredName,RegisteredCountry,RegisteredOwner,Country,Latitude,Longitude");
+	fiftyonedegrees_ipi.start("/etc/varnish/51Degrees-LiteV41.ipi");
 }
 
 /**
