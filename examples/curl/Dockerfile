@@ -17,7 +17,15 @@ RUN curl -fLsS -o /tmp/varnish.tgz https://github.com/varnish/varnish/releases/d
 	&& cd /tmp/varnish && ./configure --without-jemalloc --with-sphinx-build=true && make -j4 && make install && ldconfig \
 	&& rm -rf /tmp/varnish /tmp/varnish.tgz
 
-RUN git clone --recurse-submodules https://github.com/51Degrees/51degrees-varnish .
+# What to build, the head of main unless --build-arg names another BRANCH or
+# one COMMIT, so a change can be checked before it reaches main. REPOSITORY is
+# the address it is fetched from.
+ARG REPOSITORY=https://github.com/51Degrees/51degrees-varnish
+ARG BRANCH=main
+ARG COMMIT=
+RUN git init -q . && git remote add origin "${REPOSITORY}" \
+	&& git fetch -q origin "${COMMIT:-$BRANCH}" && git checkout -q FETCH_HEAD \
+	&& git submodule update --init --recursive
 
 # The data submodule holds a link to each data file rather than the file, so
 # this step downloads the two data files that default.vcl loads.
