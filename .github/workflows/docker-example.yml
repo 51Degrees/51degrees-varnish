@@ -1,14 +1,15 @@
 name: Docker example
 
-# Builds the curl example's Docker image from the branch under change, starts
-# it as the example's README does, and checks the README's request and
-# curl.sh. It runs when a pull request changes the example or what the image
-# builds.
+# Builds the curl example's Docker image from the commit this run checks out,
+# which for a pull request is the pull request merged into its base, starts it
+# as the example's README does, and checks the README's request and curl.sh.
+# It runs when a pull request changes the example or what the image builds.
 on:
   pull_request:
     paths:
       - 'examples/curl/**'
       - 'src/**'
+      - 'autogen.sh'
       - 'configure.ac'
       - 'Makefile.am'
       - 'cxx'
@@ -30,9 +31,20 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      - name: Build the image from this branch
+      - name: Build the image from this run's commit
         working-directory: examples/curl
-        run: docker build --build-arg BRANCH=${{ github.head_ref || github.ref_name }} -t 51d-varnish-curl .
+        env:
+          REPOSITORY: ${{ github.server_url }}/${{ github.repository }}
+          COMMIT: ${{ github.sha }}
+        run: docker build --build-arg "REPOSITORY=$REPOSITORY" --build-arg "COMMIT=$COMMIT" -t 51d-varnish-curl .
+
+      - name: Check the image holds this run's commit
+        env:
+          COMMIT: ${{ github.sha }}
+        run: |
+          built=$(docker run --rm 51d-varnish-curl git -C /app rev-parse HEAD)
+          echo "The image built $built, and this run checked out $COMMIT"
+          test "$built" = "$COMMIT"
 
       - name: Start the image as the README says
         run: docker run -d -p 8080:8080 --name curl-example 51d-varnish-curl
