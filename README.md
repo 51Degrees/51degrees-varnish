@@ -386,11 +386,28 @@ sub vcl_recv {
 | `start(filePath)` | Loads the data file. If the file cannot be used the VCL does not load, and Varnish carries on with the VCL it had. |
 | `reload(filePath)` | Reloads the data, from the original file if no path is given. If that fails the data already loaded stays in use. |
 | `match(properties, ip)` | Returns the values of the comma separated properties for an IP address. |
-| `set_properties(properties)` | Before `start`, sets the properties to load. Loading only the ones needed reduces memory use and makes each match faster. By default all of them are loaded. |
+| `set_properties(properties)` | Before `start`, sets the properties to load. Loading only the ones needed reduces memory use and makes each match faster. With the default profile only what they read is held in memory. By default all of them are loaded. |
 | `set_delimiter(delimiter)` | Before `start`, sets what separates the values of different properties. By default this is a comma. |
-| `set_performance_profile(profile)` | Before `start`, sets how much of the data is held in memory, one of `DEFAULT`, `IN_MEMORY`, `HIGH_PERFORMANCE`, `LOW_MEMORY` or `BALANCED`. |
+| `set_performance_profile(profile)` | Before `start`, sets how much of the data is held in memory, one of `DEFAULT`, `IN_MEMORY`, `HIGH_PERFORMANCE`, `LOW_MEMORY` or `BALANCED`. By default `DEFAULT` is used, which is `HIGH_PERFORMANCE`, as [Performance profile](#performance-profile) explains. |
 | `set_max_concurrency(concurrency)` | Before `start`, sets the maximum number of expected concurrent requests. |
 | `get_dataset_name()`, `get_dataset_format()`, `get_dataset_published_date()` | Describe the data file loaded. |
+
+### Performance profile
+
+With no profile set, or with `DEFAULT`, the module uses `HIGH_PERFORMANCE`. It holds in memory only what the properties named with `set_properties` read, being the graphs and profiles of their components and their values, so a match of those properties reads nothing from the data file. With no properties named it holds the whole data file in memory, so name only the ones you use. `BALANCED` holds the same whatever is named, and reads values and profiles through caches. `LOW_MEMORY` reads them from the file. A name that is not a profile is logged, and `DEFAULT` is used.
+
+How much `HIGH_PERFORMANCE` holds depends on the components of the properties named. The location properties, such as `Country`, `Latitude` and `Longitude`, share one large component, so naming any of them holds most of it. These measurements used the Enterprise data file of 19 November 2026 and the 20,000 addresses in the [data repository](https://github.com/51Degrees/data/blob/main/ip-intelligence/evidence.csv). Memory is that of the Varnish 7.1.1 child process once the file had loaded, which is 6 MB with no data file. The time is the middle of five alternating rounds of 400,000 lookups on one thread, reading the text of each value, with the C library's [performance example](https://github.com/51Degrees/51degrees-cxx/blob/178371ac8d5dec71e625fcdcb833d1dcd1ce3480/examples/ipi/C/IpIntelligence/Performance.c).
+
+| Properties named | Memory, `HIGH_PERFORMANCE` | Memory, `BALANCED` | Time a lookup, `HIGH_PERFORMANCE` | Time a lookup, `BALANCED` |
+| --- | ---: | ---: | ---: | ---: |
+| `Asn` and `AsnName` | 114 MB | 2,193 MB | 2.46 µs | 2.89 µs |
+| `RegisteredName`, `RegisteredCountry` and `RegisteredOwner` | 835 MB | 2,193 MB | Not measured | Not measured |
+| `Country`, `Latitude` and `Longitude` | 4,480 MB | 2,193 MB | 4.85 µs | 5.48 µs |
+| None | 6,324 MB | 2,193 MB | Not measured | Not measured |
+
+Where memory is short and location properties are needed, `BALANCED` holds less, for slower lookups.
+
+This is the IP Intelligence module's default only. The Device Detection module's `DEFAULT` profile is `BALANCED`.
 
 ### Choosing the address
 

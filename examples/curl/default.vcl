@@ -38,5 +38,8 @@ sub vcl_synth {
 
 sub vcl_init {
 	fiftyonedegrees.start("/app/cxx/data/device-detection/51Degrees-LiteV4.1.hash");
+	// With no performance profile set, HIGH_PERFORMANCE is used, which holds
+	// in memory only what the named properties read. Name only those used.
+	fiftyonedegrees_ipi.set_properties("AsnName");
 	fiftyonedegrees_ipi.start("/app/cxx/data/ip-intelligence/51Degrees-IPIV4AsnIpiV41.ipi");
 }

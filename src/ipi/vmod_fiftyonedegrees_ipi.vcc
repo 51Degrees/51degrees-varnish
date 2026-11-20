@@ -91,7 +91,9 @@ $Function VOID set_properties(PRIV_VCL, STRING properties)
 Description
 	Sets the properties to load, as a comma separated list, before start.
 	Only loading the properties needed reduces memory use and makes each
-	match faster. By default all properties in the data file are loaded.
+	match faster. With the default profile only what the named properties
+	read is held in memory. By default all properties in the data file are
+	loaded.
 Example
 	::
 
@@ -112,7 +114,18 @@ $Function VOID set_performance_profile(PRIV_VCL, STRING performanceProfile)
 Description
 	Sets how much of the data is held in memory, before start. The possible
 	profiles are "DEFAULT", "IN_MEMORY", "HIGH_PERFORMANCE", "LOW_MEMORY"
-	and "BALANCED". By default the "DEFAULT" profile is used.
+	and "BALANCED". By default the "DEFAULT" profile is used, which is
+	"HIGH_PERFORMANCE". A name not in this list is logged, and "DEFAULT"
+	is used.
+
+	"HIGH_PERFORMANCE" holds in memory only what the properties named with
+	set_properties read, being the graphs and profiles of their components
+	and their values, so a match of those properties reads nothing from
+	the data file. With no properties named it holds the whole data file,
+	so name only the ones needed. "BALANCED" holds the same whatever is
+	named, and reads values and profiles through caches, so it holds less
+	when the named properties are in a large component, such as the
+	location properties.
 Example
 	::
 

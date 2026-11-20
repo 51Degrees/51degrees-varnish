@@ -70,5 +70,8 @@ sub vcl_deliver {
 
 sub vcl_init {
 	fiftyonedegrees.start("/etc/varnish/51Degrees-LiteV4.1.hash");
+	// With no performance profile set, HIGH_PERFORMANCE is used, which holds
+	// in memory only what the named properties read. Name only those used.
+	fiftyonedegrees_ipi.set_properties("RegisteredName,Country,Latitude,Longitude");
 	fiftyonedegrees_ipi.start("/etc/varnish/51Degrees-LiteV41.ipi");
 }
