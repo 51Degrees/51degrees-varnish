@@ -3,6 +3,9 @@
     'use-strict';
 	var responseText = 'not found';
 
+	// The note the server adds when the data file lacks the properties.
+	var enterpriseNote = null;
+
 	var completed = false;
 
 	// changeFuncs is an array of functions. When onChange is called and passed
@@ -113,6 +116,7 @@
 			console.log("Request completed");
             // Get the response body from the request.
             var responseHeader = xhr.getResponseHeader('x-screenpixelswidth');
+            enterpriseNote = xhr.getResponseHeader('x-enterprise');
 			console.log(xhr);
 			console.log(xhr.getAllResponseHeaders());
 			
@@ -136,6 +140,10 @@
         // Send the cookie parameters as the POST body.
 		xhr.send();
     }
+
+	this.enterpriseNote = function() {
+		return enterpriseNote;
+	}
 
 	this.onChange = function(resolve) {
 		changeFuncs.push(resolve);
@@ -165,9 +173,21 @@ var fod = new fiftyoneDegreesManager();
 window.onload = function() {
 	fod.complete(function (data) {
 		document.getElementById('screenpixelswidth').innerHTML = "Screen Pixels Width: <span id=widthvalue style=\"font-weight: bold\">" + data + "</span>";
+		if (fod.enterpriseNote()) {
+			document.getElementById('enterprise').textContent = fod.enterpriseNote();
+		}
 	});
 }
 </script>
 <body>
 <p id=screenpixelswidth></p>
+<p id=enterprise></p>
+<hr />
+<h3>Find out more</h3>
+<ul>
+	<li>The engine this example uses: <a href="https://github.com/51Degrees/51degrees-cxx">https://github.com/51Degrees/51degrees-cxx</a></li>
+	<li>The Varnish modules: <a href="https://github.com/51Degrees/51degrees-varnish">https://github.com/51Degrees/51degrees-varnish</a></li>
+	<li><a href="https://51degrees.com/device-detection?utm_source=code&utm_medium=example&utm_campaign=51degrees-varnish&utm_content=examples-hash-jsexample-index-html&utm_term=device-detection">Device detection</a></li>
+	<li><a href="https://51degrees.com/pricing?utm_source=code&utm_medium=example&utm_campaign=51degrees-varnish&utm_content=examples-hash-jsexample-index-html&utm_term=pricing">Data files and pricing</a></li>
+</ul>
 </body> 

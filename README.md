@@ -89,10 +89,10 @@ Move to the Varnish directory with
 $ cd 51degrees-varnish
 ```
 
-download the Lite device detection file and the ASN IP Intelligence file, which the tests use, with
+download the Lite device detection file, the ASN IP Intelligence file and the Lite IP Intelligence file, which the tests use, with
 
 ```
-$ sh cxx/data/get-data-files.sh 51Degrees-LiteV4.1.hash 51Degrees-IPIV4AsnIpiV41.ipi
+$ sh cxx/data/get-data-files.sh 51Degrees-LiteV4.1.hash 51Degrees-IPIV4AsnIpiV41.ipi 51Degrees-LiteV41.ipi
 ```
 
 and install the module with
@@ -115,13 +115,13 @@ Where `--with-config`  [optional] sets the version that will be built. `release`
 
 `--with-vcache` [optional] sets the project the modules are built for, `varnish` for Varnish Cache or `vinyl` for Vinyl Cache. By default this is Varnish Cache if it is installed, and Vinyl Cache otherwise.
 
-The data files used by the tests can also be set when they are run, with `make check 51DEGREES_DD_PATH=/path/to/file 51DEGREES_IPI_PATH=/path/to/file`.
+The data files used by the tests can also be set when they are run, with `make check 51DEGREES_DD_PATH=/path/to/file 51DEGREES_IPI_PATH=/path/to/file`. With the default IP Intelligence file the module tests use the ASN file and the IP Intelligence and mixed examples the Lite file, which has the registration properties they show. A file named with `51DEGREES_IPI_PATH` is used for both, so for the examples it needs `RegisteredName`, which the Lite and Enterprise files have.
 
 `configure` finds the Varnish headers through pkg-config. To use headers from another folder, set the environment variable `VARNISHSRC` to that folder before running `configure` (for example `export VARNISHSRC=/usr/include/varnish`).
 
 The location of where the module will be installed can also be customized by setting the environment variable `VMOD_DIR` before running the `configure`.
 
-Then run the included tests with the following command. A `test` version and the data files downloaded above are required for this to succeed:
+Then run the included tests with the following command. A `test` version is required for this to succeed. When the free data files that the tests use by default are missing, `make check` downloads them first with the same script, and it never downloads a file named any other way:
 
 ```
 $ make check
@@ -363,7 +363,8 @@ The module reads version 4.6 data files. A data file of another version is refus
 | Data file | Where to get it | Properties |
 | --- | --- | --- |
 | ASN | `sh cxx/data/get-data-files.sh 51Degrees-IPIV4AsnIpiV41.ipi` downloads it to `cxx/data/ip-intelligence/51Degrees-IPIV4AsnIpiV41.ipi` | `AsnName` and `Asn` |
-| Lite and Enterprise | See the [data file options](https://51degrees.com/pricing?utm_source=github&utm_medium=readme&utm_campaign=51degrees-varnish&utm_content=readme.md&utm_term=ip-intelligence-data-files) | Many more, such as `RegisteredName` and `RegisteredCountry` |
+| Lite | `sh cxx/data/get-data-files.sh 51Degrees-LiteV41.ipi` downloads it to `cxx/data/ip-intelligence/51Degrees-LiteV41.ipi` | `RegisteredName`, `RegisteredCountry` and `RegisteredOwner` |
+| Enterprise | See the [data file options](https://51degrees.com/pricing?utm_source=github&utm_medium=readme&utm_campaign=51degrees-varnish&utm_content=readme.md&utm_term=ip-intelligence-data-files) | Many more, such as `Country`, `Latitude` and `Longitude` |
 
 ### The VCL file
 
@@ -385,17 +386,34 @@ sub vcl_recv {
 | `start(filePath)` | Loads the data file. If the file cannot be used the VCL does not load, and Varnish carries on with the VCL it had. |
 | `reload(filePath)` | Reloads the data, from the original file if no path is given. If that fails the data already loaded stays in use. |
 | `match(properties, ip)` | Returns the values of the comma separated properties for an IP address. |
-| `set_properties(properties)` | Before `start`, sets the properties to load. Loading only the ones needed reduces memory use and makes each match faster. By default all of them are loaded. |
+| `set_properties(properties)` | Before `start`, sets the properties to load. Loading only the ones needed reduces memory use and makes each match faster. With the default profile only what they read is held in memory. By default all of them are loaded. |
 | `set_delimiter(delimiter)` | Before `start`, sets what separates the values of different properties. By default this is a comma. |
-| `set_performance_profile(profile)` | Before `start`, sets how much of the data is held in memory, one of `DEFAULT`, `IN_MEMORY`, `HIGH_PERFORMANCE`, `LOW_MEMORY` or `BALANCED`. |
+| `set_performance_profile(profile)` | Before `start`, sets how much of the data is held in memory, one of `DEFAULT`, `IN_MEMORY`, `HIGH_PERFORMANCE`, `LOW_MEMORY` or `BALANCED`. By default `DEFAULT` is used, which is `HIGH_PERFORMANCE`, as [Performance profile](#performance-profile) explains. |
 | `set_max_concurrency(concurrency)` | Before `start`, sets the maximum number of expected concurrent requests. |
 | `get_dataset_name()`, `get_dataset_format()`, `get_dataset_published_date()` | Describe the data file loaded. |
+
+### Performance profile
+
+With no profile set, or with `DEFAULT`, the module uses `HIGH_PERFORMANCE`. It holds in memory only what the properties named with `set_properties` read, being the graphs and profiles of their components and their values, so a match of those properties reads nothing from the data file. With no properties named it holds the whole data file in memory, so name only the ones you use. `BALANCED` holds the same whatever is named, and reads values and profiles through caches. `LOW_MEMORY` reads them from the file. A name that is not a profile is logged, and `DEFAULT` is used.
+
+How much `HIGH_PERFORMANCE` holds depends on the components of the properties named. The location properties, such as `Country`, `Latitude` and `Longitude`, share one large component, so naming any of them holds most of it. These measurements used the Enterprise data file of 19 November 2026 and the 20,000 addresses in the [data repository](https://github.com/51Degrees/data/blob/main/ip-intelligence/evidence.csv). Memory is that of the Varnish 7.1.1 child process once the file had loaded, which is 6 MB with no data file. The time is the middle of five alternating rounds of 400,000 lookups on one thread, reading the text of each value, with the C library's [performance example](https://github.com/51Degrees/51degrees-cxx/blob/178371ac8d5dec71e625fcdcb833d1dcd1ce3480/examples/ipi/C/IpIntelligence/Performance.c).
+
+| Properties named | Memory, `HIGH_PERFORMANCE` | Memory, `BALANCED` | Time a lookup, `HIGH_PERFORMANCE` | Time a lookup, `BALANCED` |
+| --- | ---: | ---: | ---: | ---: |
+| `Asn` and `AsnName` | 114 MB | 2,193 MB | 2.46 µs | 2.89 µs |
+| `RegisteredName`, `RegisteredCountry` and `RegisteredOwner` | 835 MB | 2,193 MB | Not measured | Not measured |
+| `Country`, `Latitude` and `Longitude` | 4,480 MB | 2,193 MB | 4.85 µs | 5.48 µs |
+| None | 6,324 MB | 2,193 MB | Not measured | Not measured |
+
+Where memory is short and location properties are needed, `BALANCED` holds less, for slower lookups.
+
+This is the IP Intelligence module's default only. The Device Detection module's `DEFAULT` profile is `BALANCED`.
 
 ### Choosing the address
 
 With no second argument `match` looks up `client.ip`. When Varnish sits behind a proxy or a load balancer, pass the address to use instead, for example `fiftyonedegrees_ipi.match("AsnName", req.http.X-Real-IP)`.
 
-Pass one address. Given a list such as the value of `X-Forwarded-For`, the module looks up the first address in the string and ignores the rest, and the first address is not always one you can trust, so choose the address in VCL.
+Pass one address. The value is read only when all of it is one IPv4 or IPv6 address, which may have a port, as in `212.58.224.22:80` or `[2001:db8::1]:80`, as the [IP Intelligence specification](https://github.com/51Degrees/specifications/blob/main/ip-intelligence-specification/pipeline-elements/ip-intelligence-on-premise.md#reading-the-client-ip-value) says. Anything else gives `N/A`, such as a list like the value of `X-Forwarded-For`, a prefix length like `/24`, or text after the address. The first address in a list is not always one you can trust, so choose the address in VCL.
 
 ### Values
 

@@ -6,12 +6,18 @@ use both for the same request.
 
 This example is available in full on [GitHub](https://github.com/51Degrees/51degrees-varnish/blob/main/examples/mixed/gettingStarted.vcl).
 
-The example uses the Lite device detection data file and the ASN IP Intelligence
-data file. From the repository folder,
-`sh cxx/data/get-data-files.sh 51Degrees-LiteV4.1.hash 51Degrees-IPIV4AsnIpiV41.ipi`
+The example uses the free Lite device detection data file and the free Lite IP
+Intelligence data file, which has the property `RegisteredName`. From the
+repository folder,
+`sh cxx/data/get-data-files.sh 51Degrees-LiteV4.1.hash 51Degrees-LiteV41.ipi`
 downloads them to `cxx/data/device-detection/51Degrees-LiteV4.1.hash` and
-`cxx/data/ip-intelligence/51Degrees-IPIV4AsnIpiV41.ipi`. The paths to the data
-files need to be updated before running the example.
+`cxx/data/ip-intelligence/51Degrees-LiteV41.ipi`. The paths to the data files
+need to be updated before running the example.
+
+The example also asks for HardwareVendor, HardwareName and DeviceType, and for
+Country, Latitude and Longitude, which only the Enterprise data files have. On
+the free data files each reads N/A, and the x-enterprise header says where to
+ask for a copy of the Enterprise data files.
 
 In a Linux environment, the following command:
 ```
@@ -22,7 +28,11 @@ Expected output:
 HTTP/1.1 200 OK
 ...
 x-ismobile: True
-x-asn: \"BBC\":1
+x-registered-name: \"UK-BBC-991005\":1
+x-hardware: N/A,N/A,N/A
+x-location: N/A,N/A,N/A
+x-enterprise: Some of these properties need the Enterprise data files. Contact us for a copy at https://51degrees.com/contact-us?utm_source=code&utm_medium=example&utm_campaign=51degrees-varnish&utm_content=examples-mixed-gettingstarted-vcl&utm_term=enterprise-data-file
+x-find-out-more: These modules are at https://github.com/51Degrees/51degrees-varnish and the engine they use at https://github.com/51Degrees/51degrees-cxx. Read about device detection at https://51degrees.com/device-detection?utm_source=code&utm_medium=example&utm_campaign=51degrees-varnish&utm_content=examples-mixed-gettingstarted-vcl&utm_term=device-detection, about IP intelligence at https://51degrees.com/ip-intelligence?utm_source=code&utm_medium=example&utm_campaign=51degrees-varnish&utm_content=examples-mixed-gettingstarted-vcl&utm_term=ip-intelligence and about data files and pricing at https://51degrees.com/pricing?utm_source=code&utm_medium=example&utm_campaign=51degrees-varnish&utm_content=examples-mixed-gettingstarted-vcl&utm_term=pricing
 ...
 ```
 */
@@ -38,28 +48,30 @@ backend default {
 
 sub vcl_recv {
 	set req.http.x-ismobile = fiftyonedegrees.match_all("IsMobile");
-	set req.http.x-asn = fiftyonedegrees_ipi.match("AsnName", req.http.X-Real-IP);
+	set req.http.x-registered-name = fiftyonedegrees_ipi.match("RegisteredName", req.http.X-Real-IP);
+	// The hardware and location properties are only in the Enterprise data
+	// files, and read N/A on the free ones.
+	set req.http.x-hardware = fiftyonedegrees.match_all("HardwareVendor,HardwareName,DeviceType");
+	set req.http.x-location = fiftyonedegrees_ipi.match("Country,Latitude,Longitude", req.http.X-Real-IP);
 }
 
 sub vcl_deliver {
 	set resp.http.x-ismobile = req.http.x-ismobile;
-	set resp.http.x-asn = req.http.x-asn;
+	set resp.http.x-registered-name = req.http.x-registered-name;
+	set resp.http.x-hardware = req.http.x-hardware;
+	set resp.http.x-location = req.http.x-location;
+	// On a free data file, say where to ask for the Enterprise data files.
+	if (req.http.x-hardware ~ "N/A" || req.http.x-location ~ "N/A") {
+		set resp.http.x-enterprise = "Some of these properties need the Enterprise data files. Contact us for a copy at https://51degrees.com/contact-us?utm_source=code&utm_medium=example&utm_campaign=51degrees-varnish&utm_content=examples-mixed-gettingstarted-vcl&utm_term=enterprise-data-file";
+	}
+	// Say where to find out more, after the other headers.
+	set resp.http.x-find-out-more = "These modules are at https://github.com/51Degrees/51degrees-varnish and the engine they use at https://github.com/51Degrees/51degrees-cxx. Read about device detection at https://51degrees.com/device-detection?utm_source=code&utm_medium=example&utm_campaign=51degrees-varnish&utm_content=examples-mixed-gettingstarted-vcl&utm_term=device-detection, about IP intelligence at https://51degrees.com/ip-intelligence?utm_source=code&utm_medium=example&utm_campaign=51degrees-varnish&utm_content=examples-mixed-gettingstarted-vcl&utm_term=ip-intelligence and about data files and pricing at https://51degrees.com/pricing?utm_source=code&utm_medium=example&utm_campaign=51degrees-varnish&utm_content=examples-mixed-gettingstarted-vcl&utm_term=pricing";
 }
 
 sub vcl_init {
 	fiftyonedegrees.start("/etc/varnish/51Degrees-LiteV4.1.hash");
-	fiftyonedegrees_ipi.start("/etc/varnish/51Degrees-IPIV4AsnIpiV41.ipi");
+	// With no performance profile set, HIGH_PERFORMANCE is used, which holds
+	// in memory only what the named properties read. Name only those used.
+	fiftyonedegrees_ipi.set_properties("RegisteredName,Country,Latitude,Longitude");
+	fiftyonedegrees_ipi.start("/etc/varnish/51Degrees-LiteV41.ipi");
 }
-
-/**
-Find out more
-
-The engine this example uses:
-https://github.com/51Degrees/51degrees-cxx
-The Varnish modules:
-https://github.com/51Degrees/51degrees-varnish
-
-Device detection: https://51degrees.com/device-detection?utm_source=github&utm_medium=example&utm_campaign=51degrees-varnish&utm_content=examples-mixed-gettingstarted-vcl&utm_term=device-detection
-IP Intelligence: https://51degrees.com/ip-intelligence?utm_source=github&utm_medium=example&utm_campaign=51degrees-varnish&utm_content=examples-mixed-gettingstarted-vcl&utm_term=ip-intelligence
-Data files and pricing: https://51degrees.com/pricing?utm_source=github&utm_medium=example&utm_campaign=51degrees-varnish&utm_content=examples-mixed-gettingstarted-vcl&utm_term=pricing
-*/

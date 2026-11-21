@@ -19,6 +19,17 @@ HTTP/1.1 200 OK
 ...
 X-Metadata: False,55,0,0,PERFORMANCE,__zilla/5.0 (Windows____10.0; Win6_______________________________________________Chrome/7_.0.3904__7 Safari/5_____,23,15364-38914-97847-0
 ```
+The example also asks for HardwareVendor, HardwareName and DeviceType, which
+only the Enterprise data file has. On the free Lite data file each reads N/A,
+and the X-Enterprise header says where to ask for a copy of the Enterprise
+data file:
+```
+X-Hardware: N/A,N/A,N/A
+X-Enterprise: Some of these properties need the Enterprise data file. Contact us for a copy at https://51degrees.com/contact-us?utm_source=code&utm_medium=example&utm_campaign=51degrees-varnish&utm_content=examples-hash-metadata-vcl&utm_term=enterprise-data-file
+X-Find-Out-More: This module is at https://github.com/51Degrees/51degrees-varnish and the engine it uses at https://github.com/51Degrees/51degrees-cxx. Read about device detection at https://51degrees.com/device-detection?utm_source=code&utm_medium=example&utm_campaign=51degrees-varnish&utm_content=examples-hash-metadata-vcl&utm_term=device-detection and about data files and pricing at https://51degrees.com/pricing?utm_source=code&utm_medium=example&utm_campaign=51degrees-varnish&utm_content=examples-hash-metadata-vcl&utm_term=pricing
+```
+With the Enterprise data file X-Hardware holds their values and there is no
+X-Enterprise header.
 
 */
 vcl 4.0;
@@ -32,20 +43,17 @@ backend default {
 
 sub vcl_deliver {
 	set resp.http.X-IsMobileX = fiftyonedegrees.match_all("IsMobile,Iterations,Drift,Difference,Method,UserAgents,MatchedNodes,DeviceId");
+	// HardwareVendor, HardwareName and DeviceType are only in the Enterprise
+	// data file, and read N/A on a free one. Then X-Enterprise says where to
+	// ask for a copy.
+	set resp.http.X-Hardware = fiftyonedegrees.match_all("HardwareVendor,HardwareName,DeviceType");
+	if (resp.http.X-Hardware ~ "N/A") {
+		set resp.http.X-Enterprise = "Some of these properties need the Enterprise data file. Contact us for a copy at https://51degrees.com/contact-us?utm_source=code&utm_medium=example&utm_campaign=51degrees-varnish&utm_content=examples-hash-metadata-vcl&utm_term=enterprise-data-file";
+	}
+	// Say where to find out more, after the other headers.
+	set resp.http.X-Find-Out-More = "This module is at https://github.com/51Degrees/51degrees-varnish and the engine it uses at https://github.com/51Degrees/51degrees-cxx. Read about device detection at https://51degrees.com/device-detection?utm_source=code&utm_medium=example&utm_campaign=51degrees-varnish&utm_content=examples-hash-metadata-vcl&utm_term=device-detection and about data files and pricing at https://51degrees.com/pricing?utm_source=code&utm_medium=example&utm_campaign=51degrees-varnish&utm_content=examples-hash-metadata-vcl&utm_term=pricing";
 }
 
 sub vcl_init {
 	fiftyonedegrees.start("/etc/varnish/51Degrees-LiteV4.1.hash");
 }
-
-/**
-Find out more
-
-The engine this example uses:
-https://github.com/51Degrees/51degrees-cxx
-The Varnish modules:
-https://github.com/51Degrees/51degrees-varnish
-
-Device detection: https://51degrees.com/device-detection?utm_source=github&utm_medium=example&utm_campaign=51degrees-varnish&utm_content=examples-hash-metadata-vcl&utm_term=device-detection
-Data files and pricing: https://51degrees.com/pricing?utm_source=github&utm_medium=example&utm_campaign=51degrees-varnish&utm_content=examples-hash-metadata-vcl&utm_term=pricing
-*/

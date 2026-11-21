@@ -1,0 +1,146 @@
+#
+# This Original Work is copyright of 51 Degrees Mobile Experts Limited.
+# Copyright 2020 51 Degrees Mobile Experts Limited, 5 Charlotte Close,
+# Caversham, Reading, Berkshire, United Kingdom RG4 7BY.
+#
+# This Original Work is licensed under the European Union Public Licence (EUPL)
+# v.1.2 and is subject to its terms as set out below.
+#
+# If a copy of the EUPL was not distributed with this file, You can obtain
+# one at https://opensource.org/licenses/EUPL-1.2.
+#
+# The 'Compatible Licences' set out in the Appendix to the EUPL (as may be
+# amended by the European Commission) shall be deemed incompatible for
+# the purposes of the Work and the provisions of the compatibility
+# clause in Article 5 of the EUPL shall not apply.
+#
+# If using the Work as, or as part of, a network application, by
+# including the attribution notice(s) required under Article 5 of the EUPL
+# in the end user terms of the application under an appropriate heading,
+# such notice(s) shall fulfill the requirements of that article.
+#
+
+varnishtest "Every function frees what it allocates and releases the data set"
+
+# The test build can track the allocations of the 51Degrees library, and
+# get_allocated reports the bytes which are not yet freed.
+feature cmd {echo "${TEST_BUILD}" | grep -q "true"}
+
+server s1 -repeat 2 {
+	rxreq
+	txresp
+} -start
+
+${vcache} v1 -vcl+backend {
+	import std;
+	import fiftyonedegrees from "${vmod_topbuild}/src/dd/.libs/libvmod_fiftyonedegrees.so";
+
+	sub vcl_init {
+		# Tracking starts before the data set is loaded, so every byte the
+		# library frees was counted when it was allocated.
+		fiftyonedegrees.track_allocations();
+		# The in memory profile has no caches to fill, so by the time a
+		# function returns it must have freed everything it allocated for the
+		# request, including the results, which hold the data set.
+		fiftyonedegrees.set_performance_profile("IN_MEMORY");
+		fiftyonedegrees.start("${vmod_fod_datafile}");
+	}
+
+	# Calls each function which matches the request, or reads the data set,
+	# and records after each one the bytes allocated and the references to the
+	# data set held. A reference is a count, not an allocation, so a data set
+	# that is never released shows only in the count.
+	sub call_functions {
+		std.log(fiftyonedegrees.match_all("IsMobile,BrowserName"));
+		set resp.http.match-all = fiftyonedegrees.get_allocated();
+		set resp.http.match-all-refs = fiftyonedegrees.get_dataset_in_use();
+		std.log(fiftyonedegrees.match_single(req.http.user-agent, "IsMobile"));
+		set resp.http.match-single = fiftyonedegrees.get_allocated();
+		set resp.http.match-single-refs = fiftyonedegrees.get_dataset_in_use();
+		std.log(fiftyonedegrees.match_ua_client_hints("IsMobile"));
+		set resp.http.match-ua-client-hints = fiftyonedegrees.get_allocated();
+		set resp.http.match-ua-client-hints-refs = fiftyonedegrees.get_dataset_in_use();
+		std.log(fiftyonedegrees.get_javascript_all("ScreenPixelsWidthJavascript"));
+		set resp.http.get-javascript-all = fiftyonedegrees.get_allocated();
+		set resp.http.get-javascript-all-refs = fiftyonedegrees.get_dataset_in_use();
+		std.log(fiftyonedegrees.get_javascript_single(req.http.user-agent, "ScreenPixelsWidthJavascript"));
+		set resp.http.get-javascript-single = fiftyonedegrees.get_allocated();
+		set resp.http.get-javascript-single-refs = fiftyonedegrees.get_dataset_in_use();
+		std.log(fiftyonedegrees.evidence_used());
+		set resp.http.evidence-used = fiftyonedegrees.get_allocated();
+		set resp.http.evidence-used-refs = fiftyonedegrees.get_dataset_in_use();
+		fiftyonedegrees.set_resp_headers();
+		set resp.http.set-resp-headers = fiftyonedegrees.get_allocated();
+		set resp.http.set-resp-headers-refs = fiftyonedegrees.get_dataset_in_use();
+		std.log(fiftyonedegrees.get_dataset_name());
+		set resp.http.get-dataset-name = fiftyonedegrees.get_allocated();
+		set resp.http.get-dataset-name-refs = fiftyonedegrees.get_dataset_in_use();
+		std.log(fiftyonedegrees.get_dataset_format());
+		set resp.http.get-dataset-format = fiftyonedegrees.get_allocated();
+		set resp.http.get-dataset-format-refs = fiftyonedegrees.get_dataset_in_use();
+		std.log(fiftyonedegrees.get_dataset_published_date());
+		set resp.http.get-dataset-published-date = fiftyonedegrees.get_allocated();
+		set resp.http.get-dataset-published-date-refs = fiftyonedegrees.get_dataset_in_use();
+	}
+
+	sub vcl_deliver {
+		# Anything allocated once on first use is allocated before the count
+		# to compare with is taken.
+		call call_functions;
+		set resp.http.start = fiftyonedegrees.get_allocated();
+		set resp.http.start-refs = fiftyonedegrees.get_dataset_in_use();
+		call call_functions;
+	}
+} -start
+
+client c1 {
+	txreq -url "/" -hdr "User-Agent: Mozilla/5.0 (iPhone; CPU iPhone OS 7_1 like Mac OS X) AppleWebKit/537.51.2 (KHTML, like Gecko) Version/7.0 Mobile/11D167 Safari/9537.53"
+	rxresp
+	# The data set is counted, so the allocations are being tracked.
+	expect resp.http.start != "0"
+	expect resp.http.match-all == resp.http.start
+	expect resp.http.match-all-refs == resp.http.start-refs
+	expect resp.http.match-single == resp.http.start
+	expect resp.http.match-single-refs == resp.http.start-refs
+	expect resp.http.match-ua-client-hints == resp.http.start
+	expect resp.http.match-ua-client-hints-refs == resp.http.start-refs
+	expect resp.http.get-javascript-all == resp.http.start
+	expect resp.http.get-javascript-all-refs == resp.http.start-refs
+	expect resp.http.get-javascript-single == resp.http.start
+	expect resp.http.get-javascript-single-refs == resp.http.start-refs
+	expect resp.http.evidence-used == resp.http.start
+	expect resp.http.evidence-used-refs == resp.http.start-refs
+	expect resp.http.set-resp-headers == resp.http.start
+	expect resp.http.set-resp-headers-refs == resp.http.start-refs
+	expect resp.http.get-dataset-name == resp.http.start
+	expect resp.http.get-dataset-name-refs == resp.http.start-refs
+	expect resp.http.get-dataset-format == resp.http.start
+	expect resp.http.get-dataset-format-refs == resp.http.start-refs
+	expect resp.http.get-dataset-published-date == resp.http.start
+	expect resp.http.get-dataset-published-date-refs == resp.http.start-refs
+
+	# A second request, served from the cache, frees everything too.
+	txreq -url "/" -hdr "User-Agent: Mozilla/5.0 (Windows NT 6.3; WOW64; rv:41.0) Gecko/20100101 Firefox/41.0"
+	rxresp
+	expect resp.http.start != "0"
+	expect resp.http.match-all == resp.http.start
+	expect resp.http.match-all-refs == resp.http.start-refs
+	expect resp.http.match-single == resp.http.start
+	expect resp.http.match-single-refs == resp.http.start-refs
+	expect resp.http.match-ua-client-hints == resp.http.start
+	expect resp.http.match-ua-client-hints-refs == resp.http.start-refs
+	expect resp.http.get-javascript-all == resp.http.start
+	expect resp.http.get-javascript-all-refs == resp.http.start-refs
+	expect resp.http.get-javascript-single == resp.http.start
+	expect resp.http.get-javascript-single-refs == resp.http.start-refs
+	expect resp.http.evidence-used == resp.http.start
+	expect resp.http.evidence-used-refs == resp.http.start-refs
+	expect resp.http.set-resp-headers == resp.http.start
+	expect resp.http.set-resp-headers-refs == resp.http.start-refs
+	expect resp.http.get-dataset-name == resp.http.start
+	expect resp.http.get-dataset-name-refs == resp.http.start-refs
+	expect resp.http.get-dataset-format == resp.http.start
+	expect resp.http.get-dataset-format-refs == resp.http.start-refs
+	expect resp.http.get-dataset-published-date == resp.http.start
+	expect resp.http.get-dataset-published-date-refs == resp.http.start-refs
+} -run

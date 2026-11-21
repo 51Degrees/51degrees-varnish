@@ -19,6 +19,7 @@ libvmod_fiftyonedegrees_la_SOURCES = \
 	../../cxx/src/common/component.c \
 	../../cxx/src/common/data.c \
 	../../cxx/src/common/dataset.c \
+	../../cxx/src/common/date.c \
 	../../cxx/src/common/evidence.c \
 	../../cxx/src/common/exceptionsc.c \
 	../../cxx/src/common/file.c \
@@ -74,9 +75,16 @@ vcc_if.h: @VMODTOOL@ $(builddir)/vmod_fiftyonedegrees.vcc
 	@VMODTOOL@ $(builddir)/vmod_fiftyonedegrees.vcc
 
 VMOD_TESTS = $(top_srcdir)/src/dd/tests/*.vtc
+
+# Downloads the free data files when a fresh clone lacks them (see the top
+# Makefile.am).
+.PHONY: data-files
+data-files:
+	@$(MAKE) -C $(top_builddir) data-files
+
 .PHONY: $(VMOD_TESTS)
 
-$(top_srcdir)/src/dd/tests/*.vtc: libvmod_fiftyonedegrees.la
+$(top_srcdir)/src/dd/tests/*.vtc: libvmod_fiftyonedegrees.la data-files
 	@VARNISHTEST@ -Dvarnishd=@VARNISHD@ -Dvcache=@VCACHE@ -Dvmod_fod_datafile=$(datafile) -Dvmod_topbuild=$(abs_top_builddir) $@ $(testargs) \
 	|| EC=$$?; if [ "$$EC" != "77" ] ; then (exit $$EC) ; fi;
 
@@ -107,6 +115,7 @@ noinst_HEADERS = \
 	../../cxx/src/common/headers.h \
 	../../cxx/src/common/indices.h \
 	../../cxx/src/common/ip.h \
+	../../cxx/src/common/ipiSymbols.h \
 	../../cxx/src/common/json.h \
 	../../cxx/src/common/list.h \
 	../../cxx/src/common/memory.h \
