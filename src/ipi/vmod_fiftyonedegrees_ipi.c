@@ -48,6 +48,12 @@
 #define VMODIPI_VALUE_SEPARATOR "|"
 /** Start of every message from this module. */
 #define VMODIPI_LOG_PREFIX "vmod_fiftyonedegrees_ipi: "
+/**
+ * Configuration used when no profile is set, or "DEFAULT" is. It holds in
+ * memory only what the named properties read, so a lookup of them reads
+ * nothing from the file.
+ */
+#define VMODIPI_DEFAULT_CONFIG IpiHighPerformanceConfig
 
 /**
  * State of the module for one VCL. Each VCL loads its own data set, so one
@@ -253,7 +259,7 @@ static void initConfig(const struct vrt_ctx *ctx, vmodipi_state *state)
 {
 	const char *profile = state->performanceProfile;
 	if (profile == NULL || strcmp(profile, "DEFAULT") == 0) {
-		state->config = IpiDefaultConfig;
+		state->config = VMODIPI_DEFAULT_CONFIG;
 	}
 	else if (strcmp(profile, "IN_MEMORY") == 0) {
 		state->config = IpiInMemoryConfig;
@@ -269,7 +275,7 @@ static void initConfig(const struct vrt_ctx *ctx, vmodipi_state *state)
 	}
 	else {
 		logProblem(ctx, "Unrecognised performance profile, using DEFAULT", profile);
-		state->config = IpiDefaultConfig;
+		state->config = VMODIPI_DEFAULT_CONFIG;
 	}
 
 	if (state->maxConcurrency > 0) {
