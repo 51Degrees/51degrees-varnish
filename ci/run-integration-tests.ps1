@@ -41,8 +41,13 @@ if (-not (Test-Path $suite)) {
     git clone --depth 1 https://github.com/51Degrees/selenium-api-tests.git $suite
 }
 git -C $suite log -1 --format="selenium-api-tests at %H %s"
-dotnet build $suite -c Release
 if ($LASTEXITCODE -ne 0) {
+    Write-Output "::error::The shared browser test suite was not checked out"
+    $browserExit = 1
+} else {
+    dotnet build $suite -c Release
+}
+if ($browserExit -eq 0 -and $LASTEXITCODE -ne 0) {
     Write-Output "::error::The shared browser test suite did not build"
     $browserExit = 1
 }
@@ -63,10 +68,10 @@ if ($browserExit -eq 0) {
     # served over HTTP for the module's JavaScript to pass its evidence on.
     $page = Start-Process python3 -PassThru -ArgumentList "-m", "http.server", "8889", "--directory", "$repo/examples/hash/jsExample"
     try {
-        $env:EXAMPLE_URL = "http://localhost:8889/index.html"
+        $env:_51DEGREES_EXAMPLE_URL = "http://localhost:8889/index.html"
         # Seconds the page server has to answer before the tests start.
         $pageWaitSeconds = 30
-        curl -sS -o /dev/null --retry $pageWaitSeconds --retry-delay 1 --retry-connrefused $env:EXAMPLE_URL
+        curl -sS -o /dev/null --retry $pageWaitSeconds --retry-delay 1 --retry-connrefused $env:_51DEGREES_EXAMPLE_URL
         if ($LASTEXITCODE -ne 0) {
             Write-Output "::error::The JavaScript example's page was not served within $pageWaitSeconds s"
             $browserExit = 1
@@ -93,7 +98,7 @@ if ($browserExit -eq 0) {
             }
         }
     } finally {
-        Remove-Item Env:EXAMPLE_URL -ErrorAction SilentlyContinue
+        Remove-Item Env:_51DEGREES_EXAMPLE_URL -ErrorAction SilentlyContinue
         Stop-Process -InputObject $page
         # The daemon holds a lock on the file which .NET will not read past.
         sh -c "kill `$(cat '$work/varnish.pid')"
