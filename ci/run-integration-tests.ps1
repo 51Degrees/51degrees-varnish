@@ -61,8 +61,8 @@ if ($browserExit -eq 0) {
 }
 
 if ($browserExit -eq 0) {
-    # A page opened from a file cannot keep the cookie the module's
-    # JavaScript sets, so the page is served over HTTP.
+    # Chrome keeps no cookie for a page opened from a file, so the page is
+    # served over HTTP for the module's JavaScript to pass its evidence on.
     $page = Start-Process python3 -PassThru -ArgumentList "-m", "http.server", "8889", "--directory", "$repo/examples/hash/jsExample"
     try {
         $env:EXAMPLE_URL = "http://localhost:8889/index.html"
