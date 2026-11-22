@@ -4,8 +4,8 @@ For the general CI Approach, see [common-ci](https://github.com/51degrees/common
 
 The following secrets are required:
 
-* `ACCESS_TOKEN` - GitHub [access token](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens) for cloning repositories, creating pull requests and tagging.
-* `DEVICE_DETECTION_KEY` - licence key used to download the TAC data file for the tests.
+* `_51DEGREES_ACCESS_TOKEN` - GitHub [access token](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens) for cloning repositories, creating pull requests and tagging.
+* `_51DEGREES_LICENSE_KEY` - license key used to download the TAC data file for the tests.
 
 ## Differences
 
@@ -16,7 +16,7 @@ The following secrets are required:
 - There is no package update step, as there are no package dependencies.
 - The Varnish 6.0 builds need `libpcre3-dev`, which later Ubuntu releases may drop, so `options.json` names `ubuntu-24.04` rather than `ubuntu-latest`.
 - `setup-environment.ps1` builds Varnish from the source its publisher gives, and fails if the file's SHA256 is not the one published with it. A version added to `options.json` needs its address and SHA256 added there too.
-- `fetch-assets.ps1` takes every data file the tests read from common-ci's assets, which each run fetches once and caches because the workflows set `cache-assets`, so no test job downloads a data file. It copies the Lite Hash data file into `cxx/data/device-detection`, and the ASN and Lite IP Intelligence data files into `cxx/data/ip-intelligence`, where the data submodule holds only a link to each. `run-unit-tests.ps1` then runs `make check` with nothing set, as in a fresh clone, so the unit tests read the Lite Hash file from there, the IP Intelligence module tests and the `ubuntu_IPI` performance run the ASN file, and the IP Intelligence and mixed example tests the Lite IP Intelligence file. A data file a test starts to use needs an entry in common-ci's `steps/fetch-assets.ps1` first.
+- `fetch-assets.ps1` takes every data file the tests read from common-ci's assets, which each run fetches once and caches because the workflows set `cache-assets`, so no test job downloads a data file. It copies the Lite Hash data file into `cxx/data/device-detection`, and the ASN and Lite IP Intelligence data files into `cxx/data/ip-intelligence`, where the data submodule holds only a link to each. `run-unit-tests.ps1` then runs `make check` with nothing set, as in a fresh clone, so the unit tests read the Lite Hash file from there, the IP Intelligence module tests and the `ubuntu_IPI` performance run the ASN file, and the IP Intelligence and mixed example tests the Lite IP Intelligence file. A data file a test starts to use needs an entry in common-ci's `steps/fetch-assets.ps1` first. `install-package.ps1` copies the two IP Intelligence files into the tarball's build in the same way, and `run-integration-tests.ps1` names the larger Device Detection file with `_51DEGREES_DD_PATH`.
 
 ## Build Options
 

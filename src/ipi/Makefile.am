@@ -58,8 +58,8 @@ libvmod_fiftyonedegrees_ipi_la_SOURCES = \
 	../../cxx/src/common/wkbtot.c \
 	../../cxx/src/common/yamlfile.c
 
-datafile = $(or $(51DEGREES_DD_PATH),@FIFTYONEDEGREES_DATAFILE_ABSOLUTE@)
-datafile_ipi = $(or $(51DEGREES_IPI_PATH),@FIFTYONEDEGREES_DATAFILE_IPI_ABSOLUTE@)
+datafile = $(or $(_51DEGREES_DD_PATH),@FIFTYONEDEGREES_DATAFILE_ABSOLUTE@)
+datafile_ipi = $(or $(_51DEGREES_IPI_PATH),@FIFTYONEDEGREES_DATAFILE_IPI_ABSOLUTE@)
 
 nodist_libvmod_fiftyonedegrees_ipi_la_SOURCES = \
 	vcc_if.c \

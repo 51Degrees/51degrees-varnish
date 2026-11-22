@@ -90,7 +90,8 @@ Describe 'Names read and set' {
 
     It 'takes no key or address in ci/fetch-assets.ps1' {
         $ast = Get-Ast 'ci/fetch-assets.ps1'
-        @($ast.ParamBlock.Parameters).Count | Should -Be 0
+        $declared = $ast.ParamBlock ? $ast.ParamBlock.Parameters.Count : 0
+        $declared | Should -Be 0
         $passed = $ast.FindAll({
             param($node)
             $node -is [System.Management.Automation.Language.CommandParameterAst]
@@ -99,7 +100,12 @@ Describe 'Names read and set' {
     }
 
     It 'reads only _51DEGREES_ names from the environment in the performance test' {
-        $names = @(Get-Names 'tests/performance/runPerf.sh' '\$\{([A-Za-z_][A-Za-z0-9_]*):[-?=+]')
+        # A name read with a default is one the caller may set, unless the
+        # script gives it a value of its own first.
+        $script = 'tests/performance/runPerf.sh'
+        $own = @(Get-Names $script '^\s*([A-Za-z_][A-Za-z0-9_]*)=(?!"?\$\{\1:)')
+        $names = @(Get-Names $script '\$\{([A-Za-z_][A-Za-z0-9_]*):[-?=+]' |
+            Where-Object { $_ -cnotin $own })
         $names | Should -Not -BeNullOrEmpty
         $names | ForEach-Object { $_ | Should -Match $script:Ours }
     }

@@ -33,8 +33,8 @@ else
 	@false
 endif
 
-datafile = $(or $(51DEGREES_DD_PATH),@FIFTYONEDEGREES_DATAFILE_ABSOLUTE@)
-datafile_ipi = $(or $(51DEGREES_IPI_PATH),@FIFTYONEDEGREES_DATAFILE_IPI_ABSOLUTE@)
+datafile = $(or $(_51DEGREES_DD_PATH),@FIFTYONEDEGREES_DATAFILE_ABSOLUTE@)
+datafile_ipi = $(or $(_51DEGREES_IPI_PATH),@FIFTYONEDEGREES_DATAFILE_IPI_ABSOLUTE@)
 
 # A fresh clone has no data files. When a file in use is the free one that
 # configure names by default and it is missing, the data repository's script

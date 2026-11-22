@@ -115,7 +115,7 @@ Where `--with-config`  [optional] sets the version that will be built. `release`
 
 `--with-vcache` [optional] sets the project the modules are built for, `varnish` for Varnish Cache or `vinyl` for Vinyl Cache. By default this is Varnish Cache if it is installed, and Vinyl Cache otherwise.
 
-The data files used by the tests can also be set when they are run, with `make check 51DEGREES_DD_PATH=/path/to/file 51DEGREES_IPI_PATH=/path/to/file`. With the default IP Intelligence file the module tests use the ASN file and the IP Intelligence and mixed examples the Lite file, which has the registration properties they show. A file named with `51DEGREES_IPI_PATH` is used for both, so for the examples it needs `RegisteredName`, which the Lite and Enterprise files have.
+The data files used by the tests can also be set when they are run, with `make check _51DEGREES_DD_PATH=/path/to/file _51DEGREES_IPI_PATH=/path/to/file`, or by setting those two names in the environment. With the default IP Intelligence file the module tests use the ASN file and the IP Intelligence and mixed examples the Lite file, which has the registration properties they show. A file named with `_51DEGREES_IPI_PATH` is used for both, so for the examples it needs `RegisteredName`, which the Lite and Enterprise files have.
 
 `configure` finds the Varnish headers through pkg-config. To use headers from another folder, set the environment variable `VARNISHSRC` to that folder before running `configure` (for example `export VARNISHSRC=/usr/include/varnish`).
 
@@ -350,7 +350,19 @@ All the examples are in the `examples` folder. Device detection examples are in 
 | --- | --- |
 | `make check` | Runs the tests of both modules and each example. The `test` version is needed. |
 | `make mem-check` | Builds both modules with the address sanitizer, then runs the same tests. |
-| `tests/performance` | Measures the clock time of each request through Varnish, with each request making one detection. Run `cmake ..` and `cmake --build .` in a `build` folder there, then `ENGINE=ipi BUILD_PATH=/path/to/repository ./runPerf.sh` for IP Intelligence, or `EVIDENCE=/path/to/evidence.yml BUILD_PATH=/path/to/repository ./runPerf.sh` for Device Detection. It needs `cmake`, `libapr1-dev` and `libaprutil1-dev`, and writes `results.json`. |
+| `tests/performance` | Measures the clock time of each request through Varnish, with each request making one detection. Run `cmake ..` and `cmake --build .` in a `build` folder there, then `./runPerf.sh ipi /path/to/repository` for IP Intelligence, or `./runPerf.sh hash /path/to/repository` for Device Detection, where the folder is the one the modules were built in. The names below choose its files. It needs `cmake`, `libapr1-dev` and `libaprutil1-dev`, and writes `results.json`. |
+
+### Names the tests read
+
+The tests read these names from the environment, and `make check` also takes the first two on its command line. The modules read none, as each VCL names its data file.
+
+| Name | What it holds |
+| --- | --- |
+| `_51DEGREES_DD_PATH` | The path of the Device Detection data file, for `make check` and the performance test. |
+| `_51DEGREES_IPI_PATH` | The path of the IP Intelligence data file, for `make check` and the performance test. |
+| `_51DEGREES_EVIDENCE_YAML` | The path of the YAML evidence file whose records the Device Detection performance test sends. |
+
+With a name not set, `make check` uses the file `configure` was given, and the performance test the free file in `cxx/data`. CI needs the secrets that [ci/README.md](ci/README.md) lists.
 
 ## IP Intelligence
 

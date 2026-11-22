@@ -19,10 +19,6 @@ on:
 permissions:
   contents: read
 
-env:
-  # How long the image may take to answer once started, in seconds.
-  START_SECONDS: 120
-
 jobs:
   docker-example:
     name: Docker example
@@ -33,32 +29,27 @@ jobs:
 
       - name: Build the image from this run's commit
         working-directory: examples/curl
-        env:
-          REPOSITORY: ${{ github.server_url }}/${{ github.repository }}
-          COMMIT: ${{ github.sha }}
-        run: docker build --build-arg "REPOSITORY=$REPOSITORY" --build-arg "COMMIT=$COMMIT" -t 51d-varnish-curl .
+        run: docker build --build-arg "_51DEGREES_REPOSITORY=$GITHUB_SERVER_URL/$GITHUB_REPOSITORY" --build-arg "_51DEGREES_COMMIT=$GITHUB_SHA" -t 51d-varnish-curl .
 
       - name: Check the image holds this run's commit
-        env:
-          COMMIT: ${{ github.sha }}
         run: |
           built=$(docker run --rm 51d-varnish-curl git -C /app rev-parse HEAD)
-          echo "The image built $built, and this run checked out $COMMIT"
-          test "$built" = "$COMMIT"
+          echo "The image built $built, and this run checked out $GITHUB_SHA"
+          test "$built" = "$GITHUB_SHA"
 
       - name: Start the image as the README says
         run: docker run -d -p 8080:8080 --name curl-example 51d-varnish-curl
 
       - name: Wait for the example to answer
         run: |
-          for i in $(seq 1 "$START_SECONDS"); do
+          for i in $(seq 1 120); do
             if curl -s -o /dev/null "http://127.0.0.1:8080/"; then
               echo "Answered after $i seconds"
               exit 0
             fi
             sleep 1
           done
-          echo "::error::The example did not answer within $START_SECONDS seconds"
+          echo "::error::The example did not answer within 120 seconds"
           exit 1
 
       - name: Send the README's request

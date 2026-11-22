@@ -7,38 +7,47 @@
 # console performance examples. A run that failed says why and writes no
 # results.
 #
-# ENGINE is hash for device detection, the default, or ipi for IP Intelligence.
-# DATA_FILE is the data file to use. BUILD_PATH is the folder holding the built
-# modules. EVIDENCE is the evidence records file for device detection.
+# The first argument is the engine, hash for device detection or ipi for IP
+# Intelligence. The second is the folder holding the built modules.
+#
+# _51DEGREES_DD_PATH names the device detection data file and
+# _51DEGREES_IPI_PATH the IP Intelligence one. _51DEGREES_EVIDENCE_YAML names
+# the evidence records file for device detection. Each is the free file in
+# cxx/data when it is not set.
 set -u
 
+if [ "$#" -ne 2 ] || { [ "$1" != "hash" ] && [ "$1" != "ipi" ]; }; then
+	echo "Usage: $0 hash|ipi /path/to/built/modules" >&2
+	exit 2
+fi
+engine=$1
+modules=$2
+
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
-ENGINE=${ENGINE:-hash}
-BUILD_PATH=${BUILD_PATH:-$HERE/../../..}
-AB=${AB:-./ApacheBench-prefix/src/ApacheBench-build/bin/ab}
+DATA="$HERE/../../../cxx/data"
 HOST=127.0.0.1:3000
-CONCURRENCY=${CONCURRENCY:-$(nproc)}
-PASSES=$((${PASSES_PER_WORKER:-20000} * CONCURRENCY))
+WORKERS=$(nproc)
+PASSES=$((20000 * WORKERS))
 VCL="$PWD/perf.vcl"
 WORK="$PWD/varnish-work"
 
 rm -f results.json
 
-if [ "$ENGINE" == "ipi" ]; then
-	DATA_FILE=${DATA_FILE:-$BUILD_PATH/cxx/data/ip-intelligence/51Degrees-IPIV4AsnIpiV41.ipi}
+if [ "$engine" == "ipi" ]; then
+	FILE=${_51DEGREES_IPI_PATH:-$DATA/ip-intelligence/51Degrees-IPIV4AsnIpiV41.ipi}
 	# The tool can only vary the User-Agent, so the addresses are sent in it.
-	SOURCE=(-U "${EVIDENCE:-$BUILD_PATH/cxx/data/ip-intelligence/evidence.csv}")
+	SOURCE=(-U "$DATA/ip-intelligence/evidence.csv")
 	IMPORT="import fiftyonedegrees_ipi;"
 	INIT='fiftyonedegrees_ipi.set_performance_profile("IN_MEMORY");
-	fiftyonedegrees_ipi.start("'"$DATA_FILE"'");'
+	fiftyonedegrees_ipi.start("'"$FILE"'");'
 	LOOKUP='set req.http.x-result = fiftyonedegrees_ipi.match("AsnName", req.http.user-agent);'
 else
-	DATA_FILE=${DATA_FILE:-$BUILD_PATH/cxx/data/device-detection/51Degrees-LiteV4.1.hash}
-	SOURCE=(-E "${EVIDENCE:?EVIDENCE must be the evidence records file}")
+	FILE=${_51DEGREES_DD_PATH:-$DATA/device-detection/51Degrees-LiteV4.1.hash}
+	SOURCE=(-E "${_51DEGREES_EVIDENCE_YAML:-$DATA/device-detection/20000 Evidence Records.yml}")
 	IMPORT="import fiftyonedegrees;"
 	INIT='fiftyonedegrees.set_performance_profile("IN_MEMORY");
 	fiftyonedegrees.set_properties("IsMobile");
-	fiftyonedegrees.start("'"$DATA_FILE"'");'
+	fiftyonedegrees.start("'"$FILE"'");'
 	LOOKUP='set req.http.x-result = fiftyonedegrees.match_all("IsMobile");'
 fi
 
@@ -57,7 +66,7 @@ EOF
 
 rm -rf "$WORK"
 varnishd -F -n "$WORK" -a "$HOST" -f "$VCL" \
-	-p "vmod_path=$BUILD_PATH/src/dd/.libs:$BUILD_PATH/src/ipi/.libs" \
+	-p "vmod_path=$modules/src/dd/.libs:$modules/src/ipi/.libs" \
 	-s malloc,64m > varnishd.out 2>&1 &
 VARNISH_PID=$!
 
@@ -73,7 +82,7 @@ until [ "$(curl -o /dev/null -s -w '%{http_code}' "http://$HOST/")" == "200" ]; 
 	sleep 1
 done
 
-"$AB" "${SOURCE[@]}" -q -c "$CONCURRENCY" -n "$PASSES" "http://$HOST/" > process.out
+./ApacheBench-prefix/src/ApacheBench-build/bin/ab "${SOURCE[@]}" -q -c "$WORKERS" -n "$PASSES" "http://$HOST/" > process.out
 
 kill "$VARNISH_PID"
 wait "$VARNISH_PID" 2>/dev/null
@@ -88,7 +97,7 @@ if [ "${FAILED:-1}" != "0" ] || [ -n "$NON200" ] ||
 	exit 1
 fi
 
-awk -v taken="$TAKEN" -v requests="$PASSES" -v concurrency="$CONCURRENCY" 'BEGIN {
+awk -v taken="$TAKEN" -v requests="$PASSES" -v concurrency="$WORKERS" 'BEGIN {
 	seconds = taken / requests
 	printf "{\n"
 	printf "  \"HigherIsBetter\": { \"DetectionsPerSecond\": %.2f },\n", 1 / seconds
