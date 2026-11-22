@@ -26,7 +26,7 @@ const firefox = require('selenium-webdriver/firefox');
 
 // Varnish needs to be running with the JavaScript example, and the page served
 // over HTTP, as a page opened from a file cannot keep the cookie the script sets.
-const page = process.env.PAGE_URL || 'http://localhost:8889/index.html';
+const page = 'http://localhost:8889/index.html';
 
 // How long the page has to show the width once it has loaded, and how long
 // each test may take from starting the browser. Starting Firefox on a runner

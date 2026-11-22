@@ -136,9 +136,9 @@ docker run -d -p 8080:8080 51d-varnish-curl
 ```
 
 Then send the same request. The image builds `main` from GitHub rather than
-your checkout, unless `--build-arg` names another `BRANCH` or one `COMMIT`,
-and builds Varnish Cache 9.1.0, one of the versions CI tests, from its GitHub
-release after checking its SHA256.
+your checkout, unless `--build-arg` names another `_51DEGREES_BRANCH` or one
+`_51DEGREES_COMMIT`, and builds Varnish Cache 9.1.0, one of the versions CI
+tests, from its GitHub release after checking its SHA256.
 
 ### Correct output
 
@@ -254,7 +254,9 @@ The workflows call the shared workflows in
 `ci/`. `ci/setup-environment.ps1` builds each Varnish or Vinyl Cache version
 from source and checks its SHA256, so a version added to `ci/options.json`
 needs its address and SHA256 added there too. The nightly submodule update
-moves `cxx` with a pull request into `rc`.
+moves `cxx` with a pull request into `rc`. The README lists the
+[names the tests read](README.md#names-the-tests-read), and `ci/README.md`
+the secrets CI needs.
 
 ## Versions
 
