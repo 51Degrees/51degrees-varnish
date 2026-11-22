@@ -11,7 +11,7 @@ docker build -t 51d-varnish-curl .
 docker run -d -p 8080:8080 51d-varnish-curl
 ```
 
-The image builds the modules from the `main` branch on GitHub. Add `--build-arg BRANCH=<name>` to `docker build` to build another branch, or `--build-arg COMMIT=<sha>` to build one commit.
+The image builds the modules from the `main` branch on GitHub. Add `--build-arg _51DEGREES_BRANCH=<name>` to `docker build` to build another branch, or `--build-arg _51DEGREES_COMMIT=<sha>` to build one commit.
 
 ## Run
 
