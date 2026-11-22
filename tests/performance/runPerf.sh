@@ -13,7 +13,8 @@
 # _51DEGREES_DD_PATH names the device detection data file and
 # _51DEGREES_IPI_PATH the IP Intelligence one. _51DEGREES_EVIDENCE_YAML names
 # the evidence records file for device detection. Each is the free file in
-# cxx/data when it is not set.
+# cxx/data when it is not set. IP Intelligence sends the addresses of
+# cxx/data/ip-intelligence/evidence.yml.
 set -u
 
 if [ "$#" -ne 2 ] || { [ "$1" != "hash" ] && [ "$1" != "ipi" ]; }; then
@@ -35,8 +36,13 @@ rm -f results.json
 
 if [ "$engine" == "ipi" ]; then
 	FILE=${_51DEGREES_IPI_PATH:-$DATA/ip-intelligence/51Degrees-IPIV4AsnIpiV41.ipi}
-	# The tool can only vary the User-Agent, so the addresses are sent in it.
-	SOURCE=(-U "$DATA/ip-intelligence/evidence.csv")
+	# A record of the IP Intelligence evidence file holds one IP address,
+	# which is not a header. The address is sent as the User-Agent header,
+	# where the VCL reads it, so that each request carries a different
+	# address.
+	SOURCE=(-E "$PWD/evidence.ipi.yml")
+	sed 's/^server\.client-ip: /header.User-Agent: /' \
+		"$DATA/ip-intelligence/evidence.yml" > "${SOURCE[1]}"
 	IMPORT="import fiftyonedegrees_ipi;"
 	INIT='fiftyonedegrees_ipi.set_performance_profile("IN_MEMORY");
 	fiftyonedegrees_ipi.start("'"$FILE"'");'
@@ -49,6 +55,10 @@ else
 	fiftyonedegrees.set_properties("IsMobile");
 	fiftyonedegrees.start("'"$FILE"'");'
 	LOOKUP='set req.http.x-result = fiftyonedegrees.match_all("IsMobile");'
+fi
+if [ ! -s "${SOURCE[1]}" ]; then
+	echo "The evidence file ${SOURCE[1]} is missing or empty"
+	exit 1
 fi
 
 cat > "$VCL" <<EOF
