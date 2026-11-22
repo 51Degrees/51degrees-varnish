@@ -342,7 +342,7 @@ All the examples are in the `examples` folder. Device detection examples are in 
 | `mixed/gettingStarted.vcl` | Both modules for the same request |
 | `curl` | Sending evidence with cURL, with a Docker image |
 
-`make check` runs each of them, apart from the browser side of `hash/jsExample`.
+`make check` runs each of them, apart from the browser side of `hash/jsExample`. The integration tests (`ci/run-integration-tests.ps1`) check the browser side in Chrome and Firefox with the `ModuleJavaScript` tests of the shared browser test suite, [selenium-api-tests](https://github.com/51Degrees/selenium-api-tests), which they check out beside this repository. That suite finds and starts the browsers and their drivers.
 
 ## Tests
 
