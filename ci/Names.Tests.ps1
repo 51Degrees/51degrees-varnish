@@ -110,6 +110,21 @@ Describe 'Names read and set' {
         $names | ForEach-Object { $_ | Should -Match $script:Ours }
     }
 
+    It 'sends YAML evidence records for each engine in the performance test' {
+        # The benchmark program takes a YAML evidence file with -E. Each
+        # engine chooses its file in a SOURCE line.
+        $text = Get-Text 'tests/performance/runPerf.sh'
+        $options = @(Get-Names 'tests/performance/runPerf.sh' '^\s*SOURCE=\((-[A-Za-z]+) ')
+        $options | Should -Be @('-E')
+        [regex]::Matches($text, '(?m)^\s*SOURCE=\(').Count | Should -Be 2
+        $text | Should -Not -Match '\.csv'
+        $text | Should -Match 'ip-intelligence/evidence\.yml'
+    }
+
+    It 'stops the performance test when the evidence file is empty' {
+        Get-Text 'tests/performance/runPerf.sh' | Should -Match '\[ ! -s "\$\{SOURCE\[1\]\}" \]'
+    }
+
     It 'takes the engine and the build folder of the performance test as arguments' -Skip:(!$IsLinux) {
         $output = bash "$script:Repo/tests/performance/runPerf.sh" 2>&1 | Out-String
         $LASTEXITCODE | Should -Be 2
