@@ -1,0 +1,75 @@
+/**
+@example ipi/gettingStarted.vcl
+
+Shows how to look up IP Intelligence properties for an IP address.
+
+This example is available in full on [GitHub](https://github.com/51Degrees/51degrees-varnish/blob/main/examples/ipi/gettingStarted.vcl).
+
+The example uses the free Lite IP Intelligence data file, which has the
+properties `RegisteredName`, `RegisteredCountry` and `RegisteredOwner`. The free
+ASN data file has `AsnName` and `Asn` instead. The example also asks for
+`Country`, `Latitude` and `Longitude`, which only the Enterprise data file has.
+On a free data file each reads N/A, and the x-enterprise header says where to
+ask for a copy of the Enterprise data file. From the repository folder,
+`sh cxx/data/get-data-files.sh 51Degrees-LiteV41.ipi` downloads the Lite file
+to `cxx/data/ip-intelligence/51Degrees-LiteV41.ipi`. The path to the data file
+needs to be updated before running the example.
+
+On a local machine the address of the client is a loopback address, which has no
+useful IP Intelligence, so the second match reads an address from a request
+header. In production the second argument can be left out, as in the first
+match, so that the address of the client is used.
+
+In a Linux environment, the following command:
+```
+$ curl localhost:8080 -I -H "X-Real-IP: 212.58.224.22"
+```
+Expected output:
+```
+HTTP/1.1 200 OK
+...
+x-registered-name: <the registered name of the network the client address belongs to>
+x-registered-name-real: \"UK-BBC-991005\":1
+x-location-real: N/A,N/A,N/A
+x-enterprise: Some of these properties need the Enterprise data file. Contact us for a copy at https://51degrees.com/contact-us?utm_source=code&utm_medium=example&utm_campaign=51degrees-varnish&utm_content=examples-ipi-gettingstarted-vcl&utm_term=enterprise-data-file
+x-find-out-more: This module is at https://github.com/51Degrees/51degrees-varnish and the engine it uses at https://github.com/51Degrees/51degrees-cxx. Read about IP intelligence at https://51degrees.com/ip-intelligence?utm_source=code&utm_medium=example&utm_campaign=51degrees-varnish&utm_content=examples-ipi-gettingstarted-vcl&utm_term=ip-intelligence and about data files and pricing at https://51degrees.com/pricing?utm_source=code&utm_medium=example&utm_campaign=51degrees-varnish&utm_content=examples-ipi-gettingstarted-vcl&utm_term=pricing
+...
+```
+Values take the form `"value":weight`, where the weight shows the confidence in
+the value, with the double quotes escaped so they can be used in a header.
+*/
+vcl 4.0;
+
+import fiftyonedegrees_ipi;
+
+backend default {
+	.host = "127.0.0.1";
+	.port = "80";
+}
+
+sub vcl_recv {
+	set req.http.x-registered-name = fiftyonedegrees_ipi.match("RegisteredName");
+	set req.http.x-registered-name-real = fiftyonedegrees_ipi.match("RegisteredName", req.http.X-Real-IP);
+	// Country, Latitude and Longitude are only in the Enterprise data file,
+	// and read N/A on a free one.
+	set req.http.x-location-real = fiftyonedegrees_ipi.match("Country,Latitude,Longitude", req.http.X-Real-IP);
+}
+
+sub vcl_deliver {
+	set resp.http.x-registered-name = req.http.x-registered-name;
+	set resp.http.x-registered-name-real = req.http.x-registered-name-real;
+	set resp.http.x-location-real = req.http.x-location-real;
+	// On a free data file, say where to ask for the Enterprise data file.
+	if (req.http.x-location-real ~ "N/A") {
+		set resp.http.x-enterprise = "Some of these properties need the Enterprise data file. Contact us for a copy at https://51degrees.com/contact-us?utm_source=code&utm_medium=example&utm_campaign=51degrees-varnish&utm_content=examples-ipi-gettingstarted-vcl&utm_term=enterprise-data-file";
+	}
+	// Say where to find out more, after the other headers.
+	set resp.http.x-find-out-more = "This module is at https://github.com/51Degrees/51degrees-varnish and the engine it uses at https://github.com/51Degrees/51degrees-cxx. Read about IP intelligence at https://51degrees.com/ip-intelligence?utm_source=code&utm_medium=example&utm_campaign=51degrees-varnish&utm_content=examples-ipi-gettingstarted-vcl&utm_term=ip-intelligence and about data files and pricing at https://51degrees.com/pricing?utm_source=code&utm_medium=example&utm_campaign=51degrees-varnish&utm_content=examples-ipi-gettingstarted-vcl&utm_term=pricing";
+}
+
+sub vcl_init {
+	// With no performance profile set, HIGH_PERFORMANCE is used, which holds
+	// in memory only what the named properties read. Name only those used.
+	fiftyonedegrees_ipi.set_properties("RegisteredName,RegisteredCountry,RegisteredOwner,Country,Latitude,Longitude");
+	fiftyonedegrees_ipi.start("/etc/varnish/51Degrees-LiteV41.ipi");
+}

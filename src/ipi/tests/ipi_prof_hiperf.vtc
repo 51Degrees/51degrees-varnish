@@ -1,0 +1,56 @@
+#
+# This Original Work is copyright of 51 Degrees Mobile Experts Limited.
+# Copyright 2020 51 Degrees Mobile Experts Limited, 5 Charlotte Close,
+# Caversham, Reading, Berkshire, United Kingdom RG4 7BY.
+#
+# This Original Work is licensed under the European Union Public Licence (EUPL) 
+# v.1.2 and is subject to its terms as set out below.
+#
+# If a copy of the EUPL was not distributed with this file, You can obtain
+# one at https://opensource.org/licenses/EUPL-1.2.
+#
+# The 'Compatible Licences' set out in the Appendix to the EUPL (as may be
+# amended by the European Commission) shall be deemed incompatible for
+# the purposes of the Work and the provisions of the compatibility
+# clause in Article 5 of the EUPL shall not apply.
+# 
+# If using the Work as, or as part of, a network application, by 
+# including the attribution notice(s) required under Article 5 of the EUPL
+# in the end user terms of the application under an appropriate heading, 
+# such notice(s) shall fulfill the requirements of that article.
+#
+
+varnishtest "The HIGH_PERFORMANCE performance profile holds the named properties in memory"
+
+server s1 -repeat 20 {
+	rxreq
+	txresp
+} -start
+
+# The VCL loads a copy of the data file, which is then emptied. The named
+# property still has its value, so what it reads is held in memory. Asn is not
+# named, so it is not loaded.
+shell {cp "${vmod_ipi_datafile}" "${tmpdir}/copy.ipi"}
+
+${vcache} v1 -vcl+backend {
+	import fiftyonedegrees_ipi from "${vmod_topbuild}/src/ipi/.libs/libvmod_fiftyonedegrees_ipi.so";
+
+	sub vcl_init {
+		fiftyonedegrees_ipi.set_performance_profile("HIGH_PERFORMANCE");
+		fiftyonedegrees_ipi.set_properties("AsnName");
+		fiftyonedegrees_ipi.set_max_concurrency(10);
+		fiftyonedegrees_ipi.start("${tmpdir}/copy.ipi");
+	}
+	sub vcl_deliver {
+		set resp.http.asn = fiftyonedegrees_ipi.match("AsnName,Asn", "212.58.224.22");
+	}
+} -start
+
+shell {: > "${tmpdir}/copy.ipi"}
+
+client c1 {
+	txreq
+	rxresp
+	expect resp.status == 200
+	expect resp.http.asn == {\"BBC\":1,N/A}
+} -run
