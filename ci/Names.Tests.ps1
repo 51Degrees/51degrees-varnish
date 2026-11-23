@@ -8,7 +8,7 @@ BeforeAll {
 
     # Names another tool defines, which the CI scripts read as that tool
     # requires.
-    $script:ToolNames = 'PATH', 'CHROMEWEBDRIVER', 'GECKOWEBDRIVER'
+    $script:ToolNames = @('PATH')
 
     function Get-Text ([string]$Path) {
         Get-Content -Raw (Join-Path $script:Repo $Path)
@@ -54,7 +54,8 @@ Describe 'Names read and set' {
 
     It 'reads and sets only _51DEGREES_ and tool names in the CI scripts' {
         foreach ($script in $script:CiScripts) {
-            foreach ($name in @(Get-Names $script '\$env:([A-Za-z_][A-Za-z0-9_]*)')) {
+            # Both forms count, $env:NAME and the Env:NAME path.
+            foreach ($name in @(Get-Names $script '(?i)\benv:([A-Za-z_][A-Za-z0-9_]*)')) {
                 if ($name -notin $script:ToolNames) {
                     $name | Should -Match $script:Ours -Because "$script reads or sets it"
                 }
@@ -131,11 +132,19 @@ Describe 'Names read and set' {
         $output | Should -Match 'Usage: .*runPerf\.sh hash\|ipi '
     }
 
-    It 'reads no name from the environment in the browser test' {
-        $test = 'tests/examples/jsExample/cdn.test.js'
-        if (Test-Path (Join-Path $script:Repo $test)) {
-            Get-Names $test 'process\.env\.([A-Za-z_][A-Za-z0-9_]*)' | Should -BeNullOrEmpty
-        }
+    It 'names the page for the browser test in _51DEGREES_EXAMPLE_URL' {
+        # The shared browser test suite reads the page's address from this
+        # name. The script clears it again when the tests end.
+        $text = Get-Text 'ci/run-integration-tests.ps1'
+        $text | Should -Match '(?m)^\s*\$env:_51DEGREES_EXAMPLE_URL = "http://localhost:8889/index\.html"'
+        $text | Should -Match 'Remove-Item Env:_51DEGREES_EXAMPLE_URL\b'
+    }
+
+    It 'keeps no browser test of its own' {
+        git -C $script:Repo ls-files tests/examples/jsExample | Should -BeNullOrEmpty
+        $text = Get-Text 'ci/run-integration-tests.ps1'
+        $text | Should -Match 'TestCategory=ModuleJavaScript'
+        $text | Should -Not -Match 'WEBDRIVER'
     }
 
     It 'names the secrets CI needs with _51DEGREES_ in ci/README.md' {

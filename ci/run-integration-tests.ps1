@@ -30,27 +30,75 @@ $testsExit = $LASTEXITCODE
 Write-Output "Running the browser test of the JavaScript example"
 $browserExit = 0
 $work = New-Item -ItemType Directory -Force -Path "$repo/test-results/browser"
-$vcl = "$work/javascript.vcl"
-(Get-Content -Raw "$repo/examples/hash/jsExample/javascript.vcl").Replace(
-    "/etc/varnish/51Degrees-LiteV4.1.hash", "$assets/TAC-HashV41.hash") | Set-Content $vcl
-& $Daemon -n "$work/varnish" -P "$work/varnish.pid" -a 127.0.0.1:8888 -f $vcl -p "vmod_path=$build/src/dd/.libs"
+
+# The browser test is the ModuleJavaScript category of the shared browser test
+# suite, checked out beside this repository as the API repositories do. The
+# suite finds and starts Chrome, Firefox and their drivers, so nothing here
+# does. It is built before Varnish starts, so the wait for the page below
+# covers the page alone.
+$suite = Join-Path (Split-Path $repo) "selenium-api-tests"
+if (-not (Test-Path $suite)) {
+    git clone --depth 1 https://github.com/51Degrees/selenium-api-tests.git $suite
+}
+git -C $suite log -1 --format="selenium-api-tests at %H %s"
 if ($LASTEXITCODE -ne 0) {
-    Write-Output "::error::Varnish did not start for the browser test"
+    Write-Output "::error::The shared browser test suite was not checked out"
     $browserExit = 1
 } else {
+    dotnet build $suite -c Release
+}
+if ($browserExit -eq 0 -and $LASTEXITCODE -ne 0) {
+    Write-Output "::error::The shared browser test suite did not build"
+    $browserExit = 1
+}
+
+if ($browserExit -eq 0) {
+    $vcl = "$work/javascript.vcl"
+    (Get-Content -Raw "$repo/examples/hash/jsExample/javascript.vcl").Replace(
+        "/etc/varnish/51Degrees-LiteV4.1.hash", "$assets/TAC-HashV41.hash") | Set-Content $vcl
+    & $Daemon -n "$work/varnish" -P "$work/varnish.pid" -a 127.0.0.1:8888 -f $vcl -p "vmod_path=$build/src/dd/.libs"
+    if ($LASTEXITCODE -ne 0) {
+        Write-Output "::error::Varnish did not start for the browser test"
+        $browserExit = 1
+    }
+}
+
+if ($browserExit -eq 0) {
+    # Chrome keeps no cookie for a page opened from a file, so the page is
+    # served over HTTP for the module's JavaScript to pass its evidence on.
     $page = Start-Process python3 -PassThru -ArgumentList "-m", "http.server", "8889", "--directory", "$repo/examples/hash/jsExample"
-    Push-Location "$repo/tests/examples/jsExample"
     try {
-        $env:PATH = "$($env:PATH):$($env:CHROMEWEBDRIVER):$($env:GECKOWEBDRIVER)"
-        npm install
-        npm test
-        # A failure of the browser test fails the job.
-        $browserExit = $LASTEXITCODE
-        if ($browserExit -ne 0) {
-            Write-Output "::error::The browser test of the JavaScript example failed"
+        $env:_51DEGREES_EXAMPLE_URL = "http://localhost:8889/index.html"
+        # Seconds the page server has to answer before the tests start.
+        $pageWaitSeconds = 30
+        curl -sS -o /dev/null --retry $pageWaitSeconds --retry-delay 1 --retry-connrefused $env:_51DEGREES_EXAMPLE_URL
+        if ($LASTEXITCODE -ne 0) {
+            Write-Output "::error::The JavaScript example's page was not served within $pageWaitSeconds s"
+            $browserExit = 1
+        } else {
+            $trx = "module-javascript.trx"
+            dotnet test $suite -c Release --no-build --filter TestCategory=ModuleJavaScript `
+                --logger "trx;LogFileName=$trx" --logger "console;verbosity=normal" `
+                --results-directory $work
+            $testExit = $LASTEXITCODE
+            # dotnet test passes a run that found no test, or whose tests were
+            # skipped, so the results file decides, and every test in it must
+            # have passed.
+            $counters = $null
+            if (Test-Path "$work/$trx") {
+                $counters = ([xml](Get-Content -Raw "$work/$trx")).TestRun.ResultSummary.Counters
+            }
+            if ($counters) {
+                Write-Output "ModuleJavaScript: $($counters.passed) of $($counters.total) passed"
+            }
+            if ($testExit -ne 0 -or -not $counters -or [int]$counters.total -eq 0 -or
+                $counters.passed -ne $counters.total) {
+                Write-Output "::error::The browser test of the JavaScript example failed"
+                $browserExit = 1
+            }
         }
     } finally {
-        Pop-Location
+        Remove-Item Env:_51DEGREES_EXAMPLE_URL -ErrorAction SilentlyContinue
         Stop-Process -InputObject $page
         # The daemon holds a lock on the file which .NET will not read past.
         sh -c "kill `$(cat '$work/varnish.pid')"

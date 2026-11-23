@@ -229,7 +229,9 @@ There are none. The Varnish modules work only on-premise, with a data file.
   downloading them, and copies them into `cxx/data` where a fresh clone keeps
   them. The unit tests then run `make check` with nothing set
   (`ci/run-unit-tests.ps1`), and the integration tests again with the larger
-  paid file (`ci/run-integration-tests.ps1`). The Docker example has its own
+  paid file (`ci/run-integration-tests.ps1`), which then runs the JavaScript
+  example in Chrome and Firefox with the `ModuleJavaScript` tests of the
+  shared suite in 51Degrees/selenium-api-tests. The Docker example has its own
   workflow, `.github/workflows/docker-example.yml`, which builds the image
   from the commit the run checks out when a pull request changes the example
   or what the image builds, and checks the README's request and `curl.sh`.
