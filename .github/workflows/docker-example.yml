@@ -27,6 +27,38 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
+      # The data files the image loads come from the assets that the Pull
+      # Requests and Nightly Pipeline workflows cache each day, whose keys start
+      # with the date. A pull request from another repository restores none.
+      - name: Name the days of the asset cache
+        id: asset-days
+        run: |
+          echo "today=$(date -u +%Y%m%d)" >> "$GITHUB_OUTPUT"
+          echo "yesterday=$(date -u -d yesterday +%Y%m%d)" >> "$GITHUB_OUTPUT"
+
+      - name: Restore the asset cache
+        id: restore-assets
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+        uses: actions/cache/restore@v5
+        with:
+          key: ${{ steps.asset-days.outputs.today }}-
+          restore-keys: ${{ steps.asset-days.outputs.yesterday }}-
+          path: assets
+          enableCrossOsArchive: true
+
+      # The Dockerfile uses a data file it finds beside it, and downloads only
+      # one that is not there.
+      - name: Put the restored data files in the build context
+        run: |
+          for file in 51Degrees-LiteV4.1.hash 51Degrees-IPIV4AsnIpiV41.ipi; do
+            if [ -f "assets/$file" ]; then
+              cp "assets/$file" examples/curl/
+              echo "The image uses the restored $file"
+            else
+              echo "The image downloads $file, as the asset cache has no copy"
+            fi
+          done
+
       - name: Build the image from this run's commit
         working-directory: examples/curl
         run: docker build --build-arg "_51DEGREES_REPOSITORY=$GITHUB_SERVER_URL/$GITHUB_REPOSITORY" --build-arg "_51DEGREES_COMMIT=$GITHUB_SHA" -t 51d-varnish-curl .
