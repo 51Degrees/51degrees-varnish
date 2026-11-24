@@ -27,8 +27,18 @@ RUN git init -q . && git remote add origin "${_51DEGREES_REPOSITORY}" \
 	&& git fetch -q origin "${_51DEGREES_COMMIT:-$_51DEGREES_BRANCH}" && git checkout -q FETCH_HEAD \
 	&& git submodule update --init --recursive
 
+# A copy of either data file that default.vcl loads, put beside this Dockerfile
+# before the build, is used as it is. The bracketed names match the file when
+# it is there and nothing when it is not.
+COPY default.vcl 51Degrees-LiteV4.1.has[h] 51Degrees-IPIV4AsnIpiV41.ip[i] /tmp/data-files/
+RUN if [ -f /tmp/data-files/51Degrees-LiteV4.1.hash ]; then \
+		mv /tmp/data-files/51Degrees-LiteV4.1.hash cxx/data/device-detection/; fi \
+	&& if [ -f /tmp/data-files/51Degrees-IPIV4AsnIpiV41.ipi ]; then \
+		mv /tmp/data-files/51Degrees-IPIV4AsnIpiV41.ipi cxx/data/ip-intelligence/; fi \
+	&& rm -rf /tmp/data-files
+
 # The data submodule holds a link to each data file rather than the file, so
-# this step downloads the two data files that default.vcl loads.
+# this step downloads each of the two data files that is not there yet.
 RUN sh cxx/data/get-data-files.sh -s examples-51degrees-varnish \
 	51Degrees-LiteV4.1.hash 51Degrees-IPIV4AsnIpiV41.ipi
 
