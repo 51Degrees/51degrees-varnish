@@ -28,7 +28,7 @@ if ($Name -like '*_IPI') {
 # fail the Test job and stop the night's release.
 try {
     Write-Output "Installing what the benchmark tool needs"
-    sudo apt-get -y install cmake libapr1-dev libaprutil1-dev
+    & $PSScriptRoot/invoke-apt-get.ps1 -Arguments 'install', 'cmake', 'libapr1-dev', 'libaprutil1-dev'
 
     $build = New-Item -ItemType Directory -Force -Path "$repo/tests/performance/build"
     Push-Location $build

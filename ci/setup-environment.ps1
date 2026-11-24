@@ -52,8 +52,8 @@ if (!$VinylVersion -and $Major -ge 9) {
 }
 
 Write-Output "Installing the packages needed to build $Project $Version"
-sudo apt-get -y update
-sudo apt-get -y install @Packages
+& $PSScriptRoot/invoke-apt-get.ps1 -Arguments update
+& $PSScriptRoot/invoke-apt-get.ps1 -Arguments (@('install') + $Packages)
 
 $Source = New-Item -ItemType Directory -Force -Path ([IO.Path]::Combine([IO.Path]::GetTempPath(), "varnish-source"))
 Push-Location $Source
