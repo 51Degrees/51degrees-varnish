@@ -33,17 +33,17 @@
   },
   {
     "Image": "ubuntu-24.04",
-    "Name": "ubuntu-24.04_Varnish9.1.0_MemCheck_AsanVarnish_1",
+    "Name": "ubuntu-24.04_Varnish9.1.0_MemCheck_NoModule",
     "VarnishVersion": "9.1.0",
     "MemCheck": true,
-    "AsanVarnish": true
+    "MemCheckMode": "NoModule"
   },
   {
     "Image": "ubuntu-24.04",
-    "Name": "ubuntu-24.04_Varnish9.1.0_MemCheck_AsanVarnish_2",
+    "Name": "ubuntu-24.04_Varnish9.1.0_MemCheck_WithModule",
     "VarnishVersion": "9.1.0",
     "MemCheck": true,
-    "AsanVarnish": true
+    "MemCheckMode": "WithModule"
   },
   {
     "Image": "ubuntu-24.04",

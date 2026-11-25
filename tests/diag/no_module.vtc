@@ -1,0 +1,15 @@
+varnishtest "Start a child with no 51Degrees module"
+
+server s1 {
+	rxreq
+	txresp
+} -start
+
+${vcache} v1 -vcl+backend {
+} -start
+
+client c1 {
+	txreq -url "/"
+	rxresp
+	expect resp.status == 200
+} -run

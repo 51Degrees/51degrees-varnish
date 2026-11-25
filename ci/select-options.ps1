@@ -14,7 +14,7 @@ param(
 foreach ($entry in $Options) {
     # Only the address sanitizer entry, which repeats its tests to catch the
     # child crash.
-    if (!$entry.MemCheck) {
+    if (!$entry.MemCheckMode) {
         Write-Host "$($entry.Name) is left out of this build"
         continue
     }

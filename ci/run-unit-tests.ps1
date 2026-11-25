@@ -89,6 +89,35 @@ if ($MemCheckMode -eq "NoAltStack") { $options += ":use_sigaltstack=0" }
 $failedPasses = @()
 $crashes = 0
 
+# NoModule and WithModule build the modules as make mem-check does, then
+# start a child many times with a VCL that imports no module, or only the
+# device detection module, to see whether the crash needs a 51Degrees module.
+if ($MemCheckMode -in 'NoModule', 'WithModule') {
+    & $PSScriptRoot/run-vtc-tests.ps1 -BuildPath $repo -SuiteName "$Name-1" `
+        -ResultsFile "$repo/test-results/unit/$Name-1.xml" -Target "mem-check"
+    $crashes += Show-Crashes -Pass 1
+    $vtc = ($MemCheckMode -eq 'NoModule') ? 'no_module.vtc' : 'with_module.vtc'
+    $datafile = "$repo/cxx/data/device-detection/51Degrees-LiteV4.1.hash"
+    Write-Output "Running $vtc 800 times, four at a time, with ASAN_OPTIONS=$options"
+    $env:LD_PRELOAD = $asanLibrary
+    $env:ASAN_OPTIONS = $options
+    try {
+        $output = & varnishtest -k -q -j 4 -n 800 "-Dvarnishd=$daemon" `
+            '-Dvcache=varnish' "-Dvmod_topbuild=$repo" "-Dvmod_fod_datafile=$datafile" `
+            "$repo/tests/diag/$vtc" 2>&1 | ForEach-Object { "$_" }
+    } finally {
+        Remove-Item Env:LD_PRELOAD
+        Remove-Item Env:ASAN_OPTIONS
+    }
+    $output | Select-String -Pattern 'died signal|FAILED|CHECK failed|DEADLYSIGNAL|passed' |
+        Select-Object -Last 60 | ForEach-Object { Write-Output "$_" }
+    $died = @($output | Select-String -Pattern 'died signal').Count
+    $failed = @($output | Select-String -Pattern 'TEST .* FAILED').Count
+    $crashes += Show-Crashes -Pass 2
+    Write-Output "Mode $MemCheckMode, $vtc run 800 times: $failed failed, $died children died on a signal, core files: $crashes"
+    exit (($failed -gt 0) ? 1 : 0)
+}
+
 # The first pass builds both modules with the address sanitizer and runs the
 # tests, as the release build does.
 & $PSScriptRoot/run-vtc-tests.ps1 -BuildPath $repo -SuiteName "$Name-1" `
