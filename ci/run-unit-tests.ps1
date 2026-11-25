@@ -98,11 +98,11 @@ if ($MemCheckMode -in 'NoModule', 'WithModule') {
     $crashes += Show-Crashes -Pass 1
     $vtc = ($MemCheckMode -eq 'NoModule') ? 'no_module.vtc' : 'with_module.vtc'
     $datafile = "$repo/cxx/data/device-detection/51Degrees-LiteV4.1.hash"
-    Write-Output "Running $vtc 800 times, four at a time, with ASAN_OPTIONS=$options"
+    Write-Output "Running $vtc 3000 times, eight at a time, with ASAN_OPTIONS=$options"
     $env:LD_PRELOAD = $asanLibrary
     $env:ASAN_OPTIONS = $options
     try {
-        $output = & varnishtest -k -q -j 4 -n 800 "-Dvarnishd=$daemon" `
+        $output = & varnishtest -k -q -j 8 -n 3000 "-Dvarnishd=$daemon" `
             '-Dvcache=varnish' "-Dvmod_topbuild=$repo" "-Dvmod_fod_datafile=$datafile" `
             "$repo/tests/diag/$vtc" 2>&1 | ForEach-Object { "$_" }
     } finally {
@@ -114,7 +114,7 @@ if ($MemCheckMode -in 'NoModule', 'WithModule') {
     $died = @($output | Select-String -Pattern 'died signal').Count
     $failed = @($output | Select-String -Pattern 'TEST .* FAILED').Count
     $crashes += Show-Crashes -Pass 2
-    Write-Output "Mode $MemCheckMode, $vtc run 800 times: $failed failed, $died children died on a signal, core files: $crashes"
+    Write-Output "Mode $MemCheckMode, $vtc run 3000 times: $failed failed, $died children died on a signal, core files: $crashes"
     exit (($failed -gt 0) ? 1 : 0)
 }
 
