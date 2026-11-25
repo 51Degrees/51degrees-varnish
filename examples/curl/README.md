@@ -13,6 +13,8 @@ docker run -d -p 8080:8080 51d-varnish-curl
 
 The image builds the modules from the `main` branch on GitHub. Add `--build-arg _51DEGREES_BRANCH=<name>` to `docker build` to build another branch, or `--build-arg _51DEGREES_COMMIT=<sha>` to build one commit.
 
+The image downloads the free data files it loads. A copy of `51Degrees-LiteV4.1.hash` or `51Degrees-IPIV4AsnIpiV41.ipi` put beside the Dockerfile before the build is used in place of a download. Add `--build-arg _51DEGREES_DOWNLOAD_DATA_FILES=false` to make the build fail when either copy is missing, rather than download it.
+
 ## Run
 
 Use the `curl.sh` script, or a plain cURL command with any evidence you want to try:

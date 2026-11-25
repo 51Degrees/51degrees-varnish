@@ -235,6 +235,10 @@ There are none. The Varnish modules work only on-premise, with a data file.
   workflow, `.github/workflows/docker-example.yml`, which builds the image
   from the commit the run checks out when a pull request changes the example
   or what the image builds, and checks the README's request and `curl.sh`.
+  It builds the image with the two free data files from common-ci's
+  fetch-assets beside the Dockerfile, and with
+  `_51DEGREES_DOWNLOAD_DATA_FILES=false`, so the build fails rather than
+  downloads a file that is missing.
 
 ## Building the modules
 
