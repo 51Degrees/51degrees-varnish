@@ -2,8 +2,12 @@ param(
     [string]$Name = "unit",
     [bool]$MemCheck = $False,
     # How many times the address sanitizer tests run. The child crash this
-    # looks for happens about once in four runs of the whole suite.
-    [int]$MemCheckPasses = 16
+    # looks for failed about half the passes of the whole suite.
+    [int]$MemCheckPasses = 16,
+    # Cores runs with Varnish's signal handler and keeps a core file of each
+    # crash. NoAltStack stops the address sanitizer giving each thread an
+    # alternate signal stack of its own.
+    [string]$MemCheckMode = "Cores"
 )
 $ErrorActionPreference = "Stop"
 
@@ -31,16 +35,11 @@ if (!$MemCheck) {
 }
 
 # The address sanitizer tests run many times so that a child that crashes
-# now and then is caught, and each crash is reported with its stack.
+# now and then is caught, and each crash is reported.
 #
-# Core files go to /tmp/cores, and every process this script starts may write
-# one. gdb prints every thread's stack from each core, which shows the first
-# fault below the frame of Varnish's own signal handler.
-#
-# The odd passes run as make mem-check does, with Varnish's signal handler.
-# The even passes keep the address sanitizer's handler in its place
-# (allow_user_segv_handler=0), so the first fault is reported by the address
-# sanitizer, with the module's functions named, before anything else runs.
+# Core files go to /tmp/cores. The address sanitizer stops core files unless
+# disable_coredump=0. gdb prints the signal, every thread and every thread's
+# stack from each core.
 & $PSScriptRoot/invoke-apt-get.ps1 -Arguments @('install', 'gdb')
 sudo mkdir -p /tmp/cores /tmp/cores/done /tmp/asan
 sudo chmod -R 1777 /tmp/cores /tmp/asan
@@ -55,12 +54,14 @@ if (!$daemon) { $daemon = (Get-Command vinyld).Source }
 function Show-Crashes([int]$Pass) {
     $cores = @(Get-ChildItem /tmp/cores -File -Filter 'core.*')
     foreach ($core in $cores) {
-        Write-Host "::group::Pass $Pass core $($core.Name), every thread's stack"
+        Write-Host "::group::Pass $Pass core $($core.Name), the signal and every thread's stack"
         gdb -batch -nx `
-            -ex "info sharedlibrary" `
-            -ex "thread apply all bt" `
-            -ex "bt full" `
-            -ex "info registers" `
+            -ex 'p $_siginfo' `
+            -ex 'info threads' `
+            -ex 'thread apply all bt' `
+            -ex 'bt full' `
+            -ex 'info registers' `
+            -ex 'x/4i $pc' `
             $daemon $core.FullName 2>&1 | ForEach-Object { Write-Host $_ }
         Write-Host "::endgroup::"
         Move-Item $core.FullName /tmp/cores/done/
@@ -72,7 +73,7 @@ function Show-Crashes([int]$Pass) {
         Write-Host "::endgroup::"
         Remove-Item $log.FullName
     }
-    $kernel = sudo dmesg | Select-String -Pattern 'segfault|general protection|trap' |
+    $kernel = sudo dmesg 2>&1 | Select-String -Pattern 'segfault|general protection|traps:|varnish|cache-' |
         Select-Object -Last 10
     if ($kernel) {
         Write-Host "Kernel messages after pass ${Pass}:"
@@ -83,7 +84,8 @@ function Show-Crashes([int]$Pass) {
 
 $asanLibrary = (& cc '-print-file-name=libasan.so').Trim()
 if (!(Test-Path $asanLibrary)) { throw "The address sanitizer library was not found: $asanLibrary" }
-$base = "detect_leaks=0:detect_odr_violation=0:log_path=/tmp/asan/asan"
+$options = "detect_leaks=0:detect_odr_violation=0:log_path=/tmp/asan/asan:disable_coredump=0"
+if ($MemCheckMode -eq "NoAltStack") { $options += ":use_sigaltstack=0" }
 $failedPasses = @()
 $crashes = 0
 
@@ -95,9 +97,6 @@ if ($LASTEXITCODE -ne 0) { $failedPasses += 1 }
 $crashes += Show-Crashes -Pass 1
 
 for ($pass = 2; $pass -le $MemCheckPasses; $pass++) {
-    $options = ($pass % 2 -eq 0) ?
-        "${base}:handle_segv=1:allow_user_segv_handler=0:handle_abort=1:symbolize=1" :
-        $base
     Write-Output "Pass $pass with ASAN_OPTIONS=$options"
     $env:LD_PRELOAD = $asanLibrary
     $env:ASAN_OPTIONS = $options
@@ -113,5 +112,5 @@ for ($pass = 2; $pass -le $MemCheckPasses; $pass++) {
     $crashes += Show-Crashes -Pass $pass
 }
 
-Write-Output "Passes run: $MemCheckPasses, passes failed: $($failedPasses.Count) ($($failedPasses -join ', ')), core files: $crashes"
+Write-Output "Mode $MemCheckMode, passes run: $MemCheckPasses, passes failed: $($failedPasses.Count) ($($failedPasses -join ', ')), core files: $crashes"
 exit (($failedPasses.Count -gt 0 -or $scriptTestsFailed) ? 1 : 0)
