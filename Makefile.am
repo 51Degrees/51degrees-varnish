@@ -75,5 +75,5 @@ check-local: $(EXAMPLE_TESTS)
 # modules define the same names on purpose.
 mem-check:
 	$(MAKE) clean
-	$(MAKE) CFLAGS="$(CFLAGS) -fsanitize=address -fno-omit-frame-pointer -O1" LDFLAGS="$(LDFLAGS) -fsanitize=address"
+	$(MAKE) CFLAGS="$(CFLAGS) -fsanitize=address -fno-omit-frame-pointer -O1 $(MEMCHECK_EXTRA_CFLAGS)" LDFLAGS="$(LDFLAGS) -fsanitize=address"
 	LD_PRELOAD=`$(CC) -print-file-name=libasan.so` ASAN_OPTIONS=detect_leaks=0:detect_odr_violation=0 $(MAKE) -k check

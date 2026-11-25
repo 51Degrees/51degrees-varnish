@@ -33,6 +33,20 @@
   },
   {
     "Image": "ubuntu-24.04",
+    "Name": "ubuntu-24.04_Varnish9.1.0_MemCheck_WithModuleNoGlobals",
+    "VarnishVersion": "9.1.0",
+    "MemCheck": true,
+    "MemCheckMode": "WithModuleNoGlobals"
+  },
+  {
+    "Image": "ubuntu-24.04",
+    "Name": "ubuntu-24.04_Varnish9.1.0_MemCheck_WithModule",
+    "VarnishVersion": "9.1.0",
+    "MemCheck": true,
+    "MemCheckMode": "WithModule"
+  },
+  {
+    "Image": "ubuntu-24.04",
     "Name": "ubuntu_DD",
     "VarnishVersion": "9.1.0",
     "RunPerformance": true,

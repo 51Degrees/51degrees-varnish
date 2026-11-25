@@ -1,0 +1,20 @@
+varnishtest "Start a child with the 51Degrees device detection module"
+
+server s1 {
+	rxreq
+	txresp
+} -start
+
+${vcache} v1 -vcl+backend {
+	import fiftyonedegrees from "${vmod_topbuild}/src/dd/.libs/libvmod_fiftyonedegrees.so";
+
+	sub vcl_init {
+		fiftyonedegrees.start("${vmod_fod_datafile}");
+	}
+} -start
+
+client c1 {
+	txreq -url "/"
+	rxresp
+	expect resp.status == 200
+} -run

@@ -1,6 +1,9 @@
 param(
     [string]$VarnishVersion = "6.0.18",
-    [string]$VinylVersion
+    [string]$VinylVersion,
+    # Builds Varnish with its own --enable-asan, so the address sanitizer is
+    # part of varnishd rather than loaded into it.
+    [bool]$AsanVarnish = $False
 )
 $ErrorActionPreference = "Stop"
 $PSNativeCommandUseErrorActionPreference = $true
@@ -70,7 +73,9 @@ try {
     tar xzf varnish.tgz --strip-components=1 -C build
     Push-Location build
     try {
-        ./configure --without-jemalloc --with-sphinx-build=true
+        $configure = @('--without-jemalloc', '--with-sphinx-build=true')
+        if ($AsanVarnish) { $configure += '--enable-asan' }
+        ./configure @configure
         make -j ([Environment]::ProcessorCount)
         sudo make install
         sudo ldconfig
