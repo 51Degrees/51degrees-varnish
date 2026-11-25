@@ -30,7 +30,7 @@ jobs:
       - name: System
         run: |
           uname -a
-          sysctl vm.mmap_rnd_bits vm.mmap_rnd_compat_bits kernel.randomize_va_space || true
+          sudo sysctl vm.mmap_rnd_bits vm.mmap_rnd_compat_bits kernel.randomize_va_space || true
           cat /proc/sys/kernel/core_pattern
           ulimit -a
           ulimit -Hc
@@ -56,7 +56,7 @@ jobs:
           mkdir -p /tmp/cores && chmod 1777 /tmp/cores
           sudo sysctl -w kernel.core_pattern=/tmp/cores/core.%e.%p.%s
           if [ "${{ matrix.variant }}" = rnd28 ]; then sudo sysctl -w vm.mmap_rnd_bits=28; fi
-          sysctl vm.mmap_rnd_bits
+          sudo sysctl vm.mmap_rnd_bits
 
       - name: Run the tests ten times
         run: |
