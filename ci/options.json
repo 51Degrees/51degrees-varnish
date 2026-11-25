@@ -33,10 +33,17 @@
   },
   {
     "Image": "ubuntu-24.04",
-    "Name": "ubuntu-24.04_Varnish9.1.0_MemCheck_NoAltStack",
+    "Name": "ubuntu-24.04_Varnish9.1.0_MemCheck_AsanVarnish_1",
     "VarnishVersion": "9.1.0",
     "MemCheck": true,
-    "MemCheckMode": "NoAltStack"
+    "AsanVarnish": true
+  },
+  {
+    "Image": "ubuntu-24.04",
+    "Name": "ubuntu-24.04_Varnish9.1.0_MemCheck_AsanVarnish_2",
+    "VarnishVersion": "9.1.0",
+    "MemCheck": true,
+    "AsanVarnish": true
   },
   {
     "Image": "ubuntu-24.04",
