@@ -92,10 +92,19 @@ $crashes = 0
 # NoModule and WithModule build the modules as make mem-check does, then
 # start a child many times with a VCL that imports no module, or only the
 # device detection module, to see whether the crash needs a 51Degrees module.
-if ($MemCheckMode -in 'NoModule', 'WithModule') {
+# WithModuleNoGlobals builds the modules with --param=asan-globals=0, so the
+# module registers no globals with the address sanitizer when it is loaded.
+if ($MemCheckMode -in 'NoModule', 'WithModule', 'WithModuleNoGlobals') {
+    $makeArguments = ($MemCheckMode -eq 'WithModuleNoGlobals') ?
+        @('MEMCHECK_EXTRA_CFLAGS=--param=asan-globals=0') : @()
     & $PSScriptRoot/run-vtc-tests.ps1 -BuildPath $repo -SuiteName "$Name-1" `
-        -ResultsFile "$repo/test-results/unit/$Name-1.xml" -Target "mem-check"
+        -ResultsFile "$repo/test-results/unit/$Name-1.xml" -Target "mem-check" `
+        -MakeArguments $makeArguments
     $crashes += Show-Crashes -Pass 1
+    $module = "$repo/src/dd/.libs/libvmod_fiftyonedegrees.so"
+    $registers = @(nm -D $module 2>&1 | Select-String -Pattern '__asan_register_globals').Count
+    Write-Output "The module calls __asan_register_globals: $($registers -gt 0)"
+    Write-Output "Global constructors of the module: $(objdump -h $module | Select-String -Pattern 'init_array')"
     $vtc = ($MemCheckMode -eq 'NoModule') ? 'no_module.vtc' : 'with_module.vtc'
     $datafile = "$repo/cxx/data/device-detection/51Degrees-LiteV4.1.hash"
     Write-Output "Running $vtc 3000 times, eight at a time, with ASAN_OPTIONS=$options"
