@@ -3,7 +3,7 @@ param(
     [bool]$MemCheck = $False,
     # How many times the address sanitizer tests run. The child crash this
     # looks for happens about once in four runs of the whole suite.
-    [int]$MemCheckPasses = 12
+    [int]$MemCheckPasses = 16
 )
 $ErrorActionPreference = "Stop"
 
@@ -81,7 +81,8 @@ function Show-Crashes([int]$Pass) {
     return $cores.Count
 }
 
-$asanLibrary = (& cc -print-file-name=libasan.so).Trim()
+$asanLibrary = (& cc '-print-file-name=libasan.so').Trim()
+if (!(Test-Path $asanLibrary)) { throw "The address sanitizer library was not found: $asanLibrary" }
 $base = "detect_leaks=0:detect_odr_violation=0:log_path=/tmp/asan/asan"
 $failedPasses = @()
 $crashes = 0
