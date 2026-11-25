@@ -1,0 +1,99 @@
+name: Diagnose the MemCheck crash
+
+# Temporary. Runs the address sanitizer tests again and again to catch the
+# child crash with a stack.
+on:
+  push:
+    branches: [diag/memcheck-crash]
+
+permissions:
+  contents: read
+
+jobs:
+  memcheck:
+    name: ${{ matrix.variant }} ${{ matrix.n }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 75
+    strategy:
+      fail-fast: false
+      matrix:
+        variant: [core, asan]
+        n: [1, 2]
+        include:
+          - variant: rnd28
+            n: 1
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          submodules: recursive
+
+      - name: System
+        run: |
+          uname -a
+          sysctl vm.mmap_rnd_bits vm.mmap_rnd_compat_bits kernel.randomize_va_space || true
+          cat /proc/sys/kernel/core_pattern
+          ulimit -a
+          ulimit -Hc
+          gcc --version | head -1
+          gcc -print-file-name=libasan.so
+          nproc
+
+      - name: Install Varnish 9.1.0
+        shell: pwsh
+        run: ./ci/setup-environment.ps1 -VarnishVersion 9.1.0
+
+      - name: Install gdb
+        run: sudo apt-get install -y gdb
+
+      - name: Data files
+        run: sh cxx/data/get-data-files.sh -s ci-51degrees-varnish 51Degrees-LiteV4.1.hash 51Degrees-IPIV4AsnIpiV41.ipi 51Degrees-LiteV41.ipi
+
+      - name: Build
+        run: ./autogen.sh && ./configure --with-config=test && make
+
+      - name: Keep core files
+        run: |
+          mkdir -p /tmp/cores && chmod 1777 /tmp/cores
+          sudo sysctl -w kernel.core_pattern=/tmp/cores/core.%e.%p.%s
+          if [ "${{ matrix.variant }}" = rnd28 ]; then sudo sysctl -w vm.mmap_rnd_bits=28; fi
+          sysctl vm.mmap_rnd_bits
+
+      - name: Run the tests ten times
+        run: |
+          ulimit -c unlimited
+          base=detect_leaks=0:detect_odr_violation=0
+          case "${{ matrix.variant }}" in
+            asan) opts=$base:allow_user_segv_handler=0:handle_abort=1:handle_sigbus=1:disable_coredump=0 ;;
+            *) opts=$base:disable_coredump=0 ;;
+          esac
+          echo "ASAN_OPTIONS=$opts"
+          make clean >/dev/null
+          make CFLAGS="-g -O2 -fsanitize=address -fno-omit-frame-pointer -O1" LDFLAGS="-fsanitize=address" >/dev/null
+          asan=$(gcc -print-file-name=libasan.so)
+          mkdir -p diag
+          sudo dmesg --clear || true
+          for i in 1 2 3 4 5 6 7 8 9 10; do
+            LD_PRELOAD=$asan ASAN_OPTIONS=$opts make -k check > diag/run$i.log 2>&1 || true
+            f=$(grep -E '^#\s+top\s+TEST .* FAILED' diag/run$i.log || true)
+            echo "run $i: $(grep -cE '^#\s+top\s+TEST .* passed' diag/run$i.log) passed; ${f:-no failures}"
+            if [ -n "$f" ]; then
+              grep -nE 'Child \(|died|AddressSanitizer|==[0-9]+==|#[0-9]+ 0x|SUMMARY' diag/run$i.log | head -200
+            fi
+            for c in /tmp/cores/core.*; do
+              [ -e "$c" ] || continue
+              echo "=== core $c (run $i)"
+              gdb -batch -q -ex 'info signals SIGSEGV' -ex 'thread apply all bt 40' -ex 'info sharedlibrary' /usr/local/sbin/varnishd "$c" > "diag/$(basename $c).gdb.txt" 2>&1 || true
+              grep -v '^\s*$' "diag/$(basename $c).gdb.txt" | head -150
+              mv "$c" diag/ 2>/dev/null || sudo rm -f "$c"
+              rm -f diag/core.*[0-9]
+            done
+            sudo dmesg | grep -iE 'segfault|general protection|trap' && sudo dmesg --clear || true
+          done
+
+      - name: Keep the logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: diag-${{ matrix.variant }}-${{ matrix.n }}
+          path: diag/
+          retention-days: 3
