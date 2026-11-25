@@ -8,7 +8,7 @@ BeforeAll {
 
     # Names another tool defines, which the CI scripts read as that tool
     # requires.
-    $script:ToolNames = @('PATH')
+    $script:ToolNames = @('PATH', 'LD_PRELOAD', 'ASAN_OPTIONS')
 
     function Get-Text ([string]$Path) {
         Get-Content -Raw (Join-Path $script:Repo $Path)

@@ -12,6 +12,12 @@ param(
 # first, so they are left to the branch and release builds.
 
 foreach ($entry in $Options) {
+    # Only the address sanitizer entry, which repeats its tests to catch the
+    # child crash.
+    if (!$entry.MemCheck) {
+        Write-Host "$($entry.Name) is left out of this build"
+        continue
+    }
     if ($entry.RunPerformance) {
         Write-Host "$($entry.Name) measures performance, which is left to the branch and release builds"
         continue
