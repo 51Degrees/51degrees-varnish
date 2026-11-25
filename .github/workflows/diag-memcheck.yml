@@ -18,10 +18,7 @@ jobs:
       fail-fast: false
       matrix:
         variant: [core, asan]
-        n: [1, 2]
-        include:
-          - variant: rnd28
-            n: 1
+        n: [1, 2, 3]
     steps:
       - uses: actions/checkout@v6
         with:
@@ -55,7 +52,6 @@ jobs:
         run: |
           mkdir -p /tmp/cores && chmod 1777 /tmp/cores
           sudo sysctl -w kernel.core_pattern=/tmp/cores/core.%e.%p.%s
-          if [ "${{ matrix.variant }}" = rnd28 ]; then sudo sysctl -w vm.mmap_rnd_bits=28; fi
           sudo sysctl vm.mmap_rnd_bits
 
       - name: Run the tests ten times
@@ -67,10 +63,11 @@ jobs:
             *) opts=$base:disable_coredump=0 ;;
           esac
           echo "ASAN_OPTIONS=$opts"
-          make clean >/dev/null
-          make CFLAGS="-g -O2 -fsanitize=address -fno-omit-frame-pointer -O1" LDFLAGS="-fsanitize=address" >/dev/null
-          asan=$(gcc -print-file-name=libasan.so)
           mkdir -p diag
+          # Builds with the address sanitizer and runs the tests once, as CI does.
+          make mem-check > diag/run0.log 2>&1 || true
+          echo "run 0 (make mem-check): $(grep -cE '^#\s+top\s+TEST .* passed' diag/run0.log) passed; $(grep -E '^#\s+top\s+TEST .* FAILED' diag/run0.log || echo no failures)"
+          asan=$(gcc -print-file-name=libasan.so)
           sudo dmesg --clear || true
           for i in 1 2 3 4 5 6 7 8 9 10; do
             LD_PRELOAD=$asan ASAN_OPTIONS=$opts make -k check > diag/run$i.log 2>&1 || true
