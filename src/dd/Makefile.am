@@ -1,4 +1,4 @@
-AM_CPPFLAGS = -Wall -Wno-unused-variable -Wno-missing-braces -Wno-implicit-function-declaration -Wno-strict-aliasing -Werror
+AM_CPPFLAGS = -Wall -Wextra -Werror
 
 vmoddir = @VMOD_DIR@
 vmod_LTLIBRARIES = libvmod_fiftyonedegrees.la
@@ -74,6 +74,14 @@ vcc_if.c: vcc_if.h
 vcc_if.h: @VMODTOOL@ $(builddir)/vmod_fiftyonedegrees.vcc
 	@VMODTOOL@ $(builddir)/vmod_fiftyonedegrees.vcc
 
+# vmodtool writes the commit it was built from to vmod_vcs_version.txt,
+# so a build from the release tarball, which has no git, still knows it.
+# The vmodtool of Varnish 6.0 writes no such file.
+dist-hook:
+	if test -f vmod_vcs_version.txt; then \
+		cp vmod_vcs_version.txt $(distdir)/; \
+	fi
+
 VMOD_TESTS = $(top_srcdir)/src/dd/tests/*.vtc
 
 # Downloads the free data files when a fresh clone lacks them (see the top
@@ -137,6 +145,7 @@ noinst_HEADERS = \
 	../../cxx/src/common/textfile.h \
 	../../cxx/src/common/threading.h \
 	../../cxx/src/common/tree.h \
+	../../cxx/src/common/unaligned.h \
 	../../cxx/src/common/value.h \
 	../../cxx/src/common/weightedItem.h \
 	../../cxx/src/common/wkbtot.h \
@@ -162,8 +171,10 @@ CLEANFILES = \
 	$(builddir)/vcc_if.c \
 	$(builddir)/vcc_if.h \
 	$(builddir)/vmod_fiftyonedegrees.rst \
-	$(builddir)/vmod_fiftyonedegrees.man.rst \
-	$(builddir)/vmod_vcs_version.txt
+	$(builddir)/vmod_fiftyonedegrees.man.rst
+
+# Kept by make clean, as a build from the release tarball reads it.
+MAINTAINERCLEANFILES = $(builddir)/vmod_vcs_version.txt
 
 # configure writes these. In a source checkout they are left in place, as the
 # .vcc file is tracked.

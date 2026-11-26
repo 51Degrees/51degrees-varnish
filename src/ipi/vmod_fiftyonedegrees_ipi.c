@@ -99,6 +99,7 @@ int VMODFOD_EVENT(init_function)(
 	struct vmod_priv *priv,
 	enum vcl_event_e e)
 {
+	(void)ctx;
 	vmodipi_state *state;
 	if (e == VCL_EVENT_LOAD) {
 		state = (vmodipi_state *)calloc(1, sizeof(vmodipi_state));
