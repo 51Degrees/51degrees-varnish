@@ -1,9 +1,25 @@
 param(
     [string]$VarnishVersion = "6.0.18",
-    [string]$VinylVersion
+    [string]$VinylVersion,
+    # The major version of clang, from Ubuntu's own archive, that
+    # build-project.ps1 builds the modules with in place of the default gcc.
+    [string]$ClangVersion
 )
 $ErrorActionPreference = "Stop"
 $PSNativeCommandUseErrorActionPreference = $true
+
+# The package names carry the major version, so the same clang is installed
+# each time. llvm has the symbolizer that turns the address sanitizer's
+# reports into file names and lines, and libclang-rt has its runtime.
+if ($ClangVersion -and !(Get-Command "clang-$ClangVersion" -ErrorAction SilentlyContinue)) {
+    Write-Output "Installing clang $ClangVersion"
+    & $PSScriptRoot/invoke-apt-get.ps1 -Arguments update
+    & $PSScriptRoot/invoke-apt-get.ps1 -Arguments @('install',
+        "clang-$ClangVersion", "llvm-$ClangVersion", "libclang-rt-$ClangVersion-dev")
+}
+if ($ClangVersion) {
+    & "clang-$ClangVersion" --version
+}
 
 # VinylVersion builds Vinyl Cache in place of Varnish Cache, as their 9.x
 # releases are different code.
