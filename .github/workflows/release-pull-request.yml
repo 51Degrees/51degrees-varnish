@@ -6,7 +6,7 @@ name: Release Pull Request
 # it reaches main. See common-ci .github/workflows/release-pull-request.yml.
 on:
   pull_request:
-    branches: [main]
+    branches: [rc]
 
 # A push to rc while the release is open builds it again, in place of the
 # build of the older rc.
@@ -17,9 +17,15 @@ concurrency:
 jobs:
   Release:
     name: Release Pull Request
-    uses: 51Degrees/common-ci/.github/workflows/release-pull-request.yml@main
+    uses: 51Degrees/common-ci/.github/workflows/nightly-pull-request.yml@build/data-file-cache
     with:
       repo-name: ${{ github.event.repository.name }}
       org-name: ${{ github.event.repository.owner.login }}
+      pull-request-id: ${{ github.event.pull_request.number }}
+      dryrun: 'true'
       cache-assets: true
+      fill-asset-cache: true
+      common-ci-ref: build/data-file-cache
+      branch: ${{ github.base_ref }}
+      fail-fast: false
     secrets: inherit
