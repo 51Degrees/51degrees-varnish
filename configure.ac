@@ -189,6 +189,16 @@ AC_PATH_PROG([VARNISHTEST], [$vcachetest], [],
 # Set the compile arguments.
 CFLAGS+=" -I$VARNISHSRC/include -I$VARNISHSRC -I$VARNISHSRC/bin/varnishd"
 
+# Warnings are errors only in 51Degrees' own builds, which set
+# _51DEGREES_WARNINGS_AS_ERRORS to true. A build on a customer's machine shows
+# its warnings but does not fail on one, so a newer compiler cannot stop it.
+AC_MSG_CHECKING([whether warnings are errors])
+AS_CASE([`echo "$_51DEGREES_WARNINGS_AS_ERRORS" | tr 'A-Z' 'a-z'`],
+	[true], [WARNINGS_AS_ERRORS=-Werror],
+	[WARNINGS_AS_ERRORS=])
+AS_IF([test -n "$WARNINGS_AS_ERRORS"], [AC_MSG_RESULT([yes])], [AC_MSG_RESULT([no])])
+AC_SUBST([WARNINGS_AS_ERRORS])
+
 AS_MKDIR_P([src/dd])
 `cat $srcdir/src/dd/vmod_fiftyonedegrees.vcc.template > src/dd/vmod_fiftyonedegrees.vcc`
 if test "x$config" = "xtest"; then

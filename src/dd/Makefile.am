@@ -1,4 +1,4 @@
-AM_CPPFLAGS = -Wall -Wextra -Werror
+AM_CPPFLAGS = -Wall -Wextra $(WARNINGS_AS_ERRORS)
 
 vmoddir = @VMOD_DIR@
 vmod_LTLIBRARIES = libvmod_fiftyonedegrees.la
