@@ -73,7 +73,19 @@ check-local: $(EXAMPLE_TESTS)
 # is not built with it, so its library has to be loaded first. Leaks are not
 # checked, as varnishd does not free what it holds when it exits, and the two
 # modules define the same names on purpose.
+#
+# clang names its sanitizer library differently from gcc, and answers
+# -print-file-name=libasan.so with gcc's library, so the compiler is told
+# apart by its version text. clang links a module to its shared sanitizer
+# library only when -shared-libasan asks it to, and the sanitizer finds
+# clang's symbolizer, which turns the addresses in a report into file names
+# and lines, only when it is named.
+asan_clang = $(findstring clang,$(shell $(CC) --version))
+asan_ldflags = $(if $(asan_clang),-XCClinker -shared-libasan)
+asan_library = $(if $(asan_clang),libclang_rt.asan-x86_64.so,libasan.so)
+asan_symbolizer = $(if $(asan_clang),ASAN_SYMBOLIZER_PATH=`$(CC) -print-prog-name=llvm-symbolizer`)
+
 mem-check:
 	$(MAKE) clean
-	$(MAKE) CFLAGS="$(CFLAGS) -fsanitize=address -fno-omit-frame-pointer -O1" LDFLAGS="$(LDFLAGS) -fsanitize=address"
-	LD_PRELOAD=`$(CC) -print-file-name=libasan.so` ASAN_OPTIONS=detect_leaks=0:detect_odr_violation=0 $(MAKE) -k check
+	$(MAKE) CFLAGS="$(CFLAGS) -fsanitize=address -fno-omit-frame-pointer -O1" LDFLAGS="$(LDFLAGS) -fsanitize=address $(asan_ldflags)"
+	LD_PRELOAD=`$(CC) -print-file-name=$(asan_library)` $(asan_symbolizer) ASAN_OPTIONS=detect_leaks=0:detect_odr_violation=0 $(MAKE) -k check
