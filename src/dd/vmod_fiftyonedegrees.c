@@ -55,7 +55,7 @@ vmodfod_global global = VMODFOD_DEFAULTGLOBAL;
  */
 void privResourceFree(void *ptr)
 {
-	int i;
+	size_t i;
 	if (global.status == SUCCESS) {
 		ResourceManagerFree(global.manager);
 		for (i = 0; i < global.setHeadersCount; i++) {
@@ -82,6 +82,7 @@ int VMODFOD_EVENT(init_function)(
 	struct vmod_priv *priv,
 	enum vcl_event_e e)
 {
+	(void)ctx;
 	switch (e) {
 		case VCL_EVENT_LOAD:
 			// Allocate memory for both ResourceManager and ConfigHash objects
@@ -269,6 +270,7 @@ VCL_STRING vmod_get_dataset_published_date(const struct vrt_ctx *ctx)
  */
 void vmod_set_properties(const struct vrt_ctx *ctx, VCL_STRING properties)
 {
+	(void)ctx;
 	global.requiredProperties = properties;
 }
 
@@ -280,6 +282,7 @@ void vmod_set_properties(const struct vrt_ctx *ctx, VCL_STRING properties)
  */
 void vmod_set_delimiter(const struct vrt_ctx *ctx, VCL_STRING delimiter)
 {
+	(void)ctx;
 	global.propertyDelimiter = delimiter;
 }
 
@@ -292,6 +295,7 @@ void vmod_set_delimiter(const struct vrt_ctx *ctx, VCL_STRING delimiter)
  */
 void vmod_set_performance_profile(const struct vrt_ctx *ctx, VCL_STRING performanceProfile)
 {
+	(void)ctx;
 	global.performanceProfile = performanceProfile;
 }
 
@@ -303,6 +307,7 @@ void vmod_set_performance_profile(const struct vrt_ctx *ctx, VCL_STRING performa
  */
 void vmod_set_drift(const struct vrt_ctx *ctx, VCL_INT drift)
 {
+	(void)ctx;
 	global.drift.value = drift;
 	global.drift.set = true;
 }
@@ -316,6 +321,7 @@ void vmod_set_drift(const struct vrt_ctx *ctx, VCL_INT drift)
  */
 void vmod_set_difference(const struct vrt_ctx *ctx, VCL_INT difference)
 {
+	(void)ctx;
 	global.difference.value = difference;
 	global.difference.set = true;
 }
@@ -328,6 +334,7 @@ void vmod_set_difference(const struct vrt_ctx *ctx, VCL_INT difference)
  */ 
 void vmod_set_allow_unmatched(const struct vrt_ctx *ctx, VCL_STRING allowUnmatched)
 {
+	(void)ctx;
 	global.allowUnmatched.value = VMODFOD_GET_BOOL(allowUnmatched);
 	global.allowUnmatched.set = true;
 }
@@ -340,6 +347,7 @@ void vmod_set_allow_unmatched(const struct vrt_ctx *ctx, VCL_STRING allowUnmatch
  */
 void vmod_set_use_performance_graph(const struct vrt_ctx *ctx, VCL_STRING usePerformanceGraph)
 {
+	(void)ctx;
 	global.usePerformanceGraph.value = VMODFOD_GET_BOOL(usePerformanceGraph);
 	global.usePerformanceGraph.set = true;
 }
@@ -352,6 +360,7 @@ void vmod_set_use_performance_graph(const struct vrt_ctx *ctx, VCL_STRING usePer
  */
 void vmod_set_use_predictive_graph(const struct vrt_ctx *ctx, VCL_STRING usePredictiveGraph)
 {
+	(void)ctx;
 	global.usePredictiveGraph.value = VMODFOD_GET_BOOL(usePredictiveGraph);
 	global.usePredictiveGraph.set = true;
 }
@@ -364,6 +373,7 @@ void vmod_set_use_predictive_graph(const struct vrt_ctx *ctx, VCL_STRING usePred
  */
 void vmod_set_max_concurrency(const struct vrt_ctx *ctx, VCL_INT concurrency)
 {
+	(void)ctx;
 	global.maxConcurrency.value = concurrency;
 	global.maxConcurrency.set = true;
 }
@@ -505,6 +515,7 @@ static void initSetHeaders()
 {
 	vmodfod_setHeader *setHeader;
 	int i, setHeaderCount = 0;
+	uint32_t propertyIndex;
 	const char *propertyName, *headerName;
 	DataSetHash *dataSet = DataSetHashGet(global.manager);
 
@@ -524,8 +535,11 @@ static void initSetHeaders()
 	}
 
 	// Count the set header properties.
-	for (i = 0; i < dataSet->b.b.available->count; i++) {
-		propertyName = STRING(dataSet->b.b.available->items[i].name.data.ptr);
+	for (propertyIndex = 0;
+		propertyIndex < dataSet->b.b.available->count;
+		propertyIndex++) {
+		propertyName = STRING(
+			dataSet->b.b.available->items[propertyIndex].name.data.ptr);
 		if(strncmp(
 			propertyName,
 			"SetHeader", strlen("SetHeader")) == 0) {
@@ -565,15 +579,18 @@ static void initSetHeaders()
 	}
 
 	// Fill the properties.
-	for (i = 0; i < dataSet->b.b.available->count; i++) {
-		propertyName = STRING(dataSet->b.b.available->items[i].name.data.ptr);
+	for (propertyIndex = 0;
+		propertyIndex < dataSet->b.b.available->count;
+		propertyIndex++) {
+		propertyName = STRING(
+			dataSet->b.b.available->items[propertyIndex].name.data.ptr);
 		if(strncmp(
 			propertyName,
 			"SetHeader", strlen("SetHeader")) == 0) {
 				headerName = skipComponentName(propertyName + strlen("SetHeader"));
 				setHeader = &global.setHeaders[getSetHeaderIndex(headerNames, headerName, setHeaderCount)];
 				setHeader->propertyIndexes[setHeader->propertyCount] =
-					dataSet->b.b.available->items[i].requiredPropertyIndex;
+					dataSet->b.b.available->items[propertyIndex].requiredPropertyIndex;
 				setHeader->propertyCount++;
 			}
 	}
@@ -590,7 +607,7 @@ static void initSetHeaders()
  */
 void vmod_start(const struct vrt_ctx *ctx, VCL_STRING filePath)
 {
-	int i;
+	(void)ctx;
 	EXCEPTION_CREATE;
 	PropertiesRequired properties = PropertiesDefault;
 	properties.string = global.requiredProperties;
@@ -624,6 +641,7 @@ void vmod_start(const struct vrt_ctx *ctx, VCL_STRING filePath)
  * @param a the vmod argument which contains the file path. 
  */
 void vmod_reload(const struct vrt_ctx *ctx, struct VARGS(reload) *a) {
+	(void)ctx;
 	const char *filePath;
 
 	EXCEPTION_CREATE
@@ -705,7 +723,9 @@ static void stringToArray(
 	index = 0;
 	propertiesArray[index++] = propertiesString;
 
-	for (charPos = 0; charPos < propertiesStringLength; charPos++)
+	for (charPos = 0;
+		charPos < propertiesStringLength && index < propertiesCount;
+		charPos++)
 	{
 		if (propertiesString[charPos] == ',') {
 			propertiesString[charPos] = '\0';
@@ -1807,7 +1827,7 @@ static unsigned printSetHeaderToWorkspace(
 	ResultsHash *result,
 	vmodfod_setHeader *header)
 {
-	int i;
+	size_t i;
 	unsigned v = 0;
 	unsigned lastValue;
 	bool written = false;
@@ -1857,7 +1877,7 @@ static unsigned printSetHeaderToWorkspace(
  */
 void vmod_set_resp_headers(const struct vrt_ctx *ctx)
 {
-	int i;
+	size_t i;
 	vmodfod_setHeader *setHeader;
 	char *currentHeaderString,
 		*existingValue,

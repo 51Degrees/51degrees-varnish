@@ -1,16 +1,15 @@
 AC_PREREQ(2.59)
 AC_INIT([51degrees-varnish], [trunk])
 AC_CONFIG_MACRO_DIR([m4])
-AM_CONFIG_HEADER(config.h)
+AC_CONFIG_HEADERS([config.h])
 
-AC_CANONICAL_SYSTEM
+AC_CANONICAL_TARGET
 AC_LANG(C)
 
-AM_INIT_AUTOMAKE([foreign subdir-objects -Wno-portability])
+AM_INIT_AUTOMAKE([foreign subdir-objects])
 
-AC_GNU_SOURCE
+AC_USE_SYSTEM_EXTENSIONS
 AC_PROG_CC
-AC_PROG_CC_STDC
 if test "x$ac_cv_prog_cc_c99" = xno; then
 	AC_MSG_ERROR([Could not find a C99 compatible compiler])
 fi
@@ -18,7 +17,6 @@ AC_PROG_CPP
 
 LT_INIT([disable-static])
 AC_PROG_INSTALL
-AC_PROG_LIBTOOL
 AC_PROG_MAKE_SET
 
 AC_PROG_EGREP
@@ -36,7 +34,6 @@ AC_CHECK_PROGS(PYTHON,
 	[AC_MSG_ERROR([Python is needed to build this vmod, please install python.])])
 
 # Checks for header files.
-AC_HEADER_STDC
 AC_CHECK_HEADERS([sys/stdlib.h])
 
 # backwards compat with older pkg-config
@@ -190,13 +187,25 @@ AC_PATH_PROG([VARNISHTEST], [$vcachetest], [],
     [$VARNISHSRC/bin/varnishtest:$LIBVARNISHAPI_BINDIR:$LIBVARNISHAPI_SBINDIR:$PATH])
 
 # Set the compile arguments.
-CFLAGS+=" -Wno-unused-but-set-variable -Wno-unused-function -Wno-format-security -Wno-uninitialized -I$VARNISHSRC/include -I$VARNISHSRC -I$VARNISHSRC/bin/varnishd"
+CFLAGS+=" -I$VARNISHSRC/include -I$VARNISHSRC -I$VARNISHSRC/bin/varnishd"
+
+# Warnings are errors only in 51Degrees' own builds, which set
+# _51DEGREES_WARNINGS_AS_ERRORS to true. A build on a customer's machine shows
+# its warnings but does not fail on one, so a newer compiler cannot stop it.
+AC_MSG_CHECKING([whether warnings are errors])
+AS_CASE([`echo "$_51DEGREES_WARNINGS_AS_ERRORS" | tr 'A-Z' 'a-z'`],
+	[true], [WARNINGS_AS_ERRORS=-Werror],
+	[WARNINGS_AS_ERRORS=])
+AS_IF([test -n "$WARNINGS_AS_ERRORS"], [AC_MSG_RESULT([yes])], [AC_MSG_RESULT([no])])
+AC_SUBST([WARNINGS_AS_ERRORS])
 
 AS_MKDIR_P([src/dd])
 `cat $srcdir/src/dd/vmod_fiftyonedegrees.vcc.template > src/dd/vmod_fiftyonedegrees.vcc`
 if test "x$config" = "xtest"; then
 	`cat $srcdir/src/dd/vmod_fiftyonedegrees_extra.h.template | sed 's/OBTAIN_RESULTS_FUNC_NAME/obtainResultsFromAvailableHeadersDecor/g;s/GET_HAS_VALUES_FUNC_NAME/ResultsHashGetHasValuesDecor/g' > src/dd/vmod_fiftyonedegrees_extra.h`
-	`cat $srcdir/src/dd/vmod_fiftyonedegrees.vcc.template.test >> src/dd/vmod_fiftyonedegrees.vcc`
+	# The test functions follow the last function of the template, so the
+	# license at the top of their file is left out of the module's documentation.
+	`sed '/^#/d' $srcdir/src/dd/vmod_fiftyonedegrees.vcc.template.test >> src/dd/vmod_fiftyonedegrees.vcc`
 else
 	`cat $srcdir/src/dd/vmod_fiftyonedegrees_extra.h.template | sed 's/OBTAIN_RESULTS_FUNC_NAME/obtainResultsFromAvailableHeaders/g;s/GET_HAS_VALUES_FUNC_NAME/ResultsHashGetHasValues/g' > src/dd/vmod_fiftyonedegrees_extra.h`
 fi

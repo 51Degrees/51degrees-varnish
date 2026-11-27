@@ -33,6 +33,8 @@ fiftyonedegrees.start(datafilepath),
 then get a match property from a requesting device with
 fiftyonedegrees.match_*(propertyname).
 
+$Event init_function
+
 $Function VOID start(STRING filePath)
 
 Return value
@@ -277,8 +279,3 @@ $Function STRING get_dataset_published_date()
 
 Description
 	Returns the date the dataset was published in the format YYYY-MM-DD.
-
-$Event init_function
-
-Description
-	Initialize the memory used by 51Degrees Device Detection VMOD.

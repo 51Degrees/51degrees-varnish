@@ -5,6 +5,12 @@ param(
 $ErrorActionPreference = "Stop"
 $PSNativeCommandUseErrorActionPreference = $true
 
+# A warning stops 51Degrees' own builds. Until the shared workflows set this
+# for every job, the build scripts set it.
+if (!$env:_51DEGREES_WARNINGS_AS_ERRORS) {
+    $env:_51DEGREES_WARNINGS_AS_ERRORS = 'true'
+}
+
 # The package job calls this with no build options, and no Varnish installed.
 if (!$Name) {
     Write-Output "Not building the tarball, as this job has no Varnish"

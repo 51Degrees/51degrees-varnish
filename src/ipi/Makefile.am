@@ -1,4 +1,4 @@
-AM_CPPFLAGS = -Wall -Wno-unused-variable -Wno-missing-braces -Wno-implicit-function-declaration -Wno-strict-aliasing -Werror
+AM_CPPFLAGS = -Wall -Wextra $(WARNINGS_AS_ERRORS)
 
 vmoddir = @VMOD_DIR@
 vmod_LTLIBRARIES = libvmod_fiftyonedegrees_ipi.la
@@ -72,6 +72,14 @@ vcc_if.c: vcc_if.h
 vcc_if.h: @VMODTOOL@ $(srcdir)/vmod_fiftyonedegrees_ipi.vcc
 	@VMODTOOL@ $(srcdir)/vmod_fiftyonedegrees_ipi.vcc
 
+# vmodtool writes the commit it was built from to vmod_vcs_version.txt,
+# so a build from the release tarball, which has no git, still knows it.
+# The vmodtool of Varnish 6.0 writes no such file.
+dist-hook:
+	if test -f vmod_vcs_version.txt; then \
+		cp vmod_vcs_version.txt $(distdir)/; \
+	fi
+
 VMOD_TESTS = $(top_srcdir)/src/ipi/tests/*.vtc
 
 # Downloads the free data files when a fresh clone lacks them (see the top
@@ -104,5 +112,7 @@ CLEANFILES = \
 	$(builddir)/vcc_if.c \
 	$(builddir)/vcc_if.h \
 	$(builddir)/vmod_fiftyonedegrees_ipi.rst \
-	$(builddir)/vmod_fiftyonedegrees_ipi.man.rst \
-	$(builddir)/vmod_vcs_version.txt
+	$(builddir)/vmod_fiftyonedegrees_ipi.man.rst
+
+# Kept by make clean, as a build from the release tarball reads it.
+MAINTAINERCLEANFILES = $(builddir)/vmod_vcs_version.txt

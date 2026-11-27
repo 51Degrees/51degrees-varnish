@@ -43,7 +43,7 @@ typedef struct vmodfod_global_test_t {
 /**
  * Set default test expected value
  */
-vmodfod_global_test globalTest = {{false, 0}, {false, 0}};
+vmodfod_global_test globalTest = {{false, 0}, {false, 0}, {false, false}};
 
 /**
  * Global structure available to the module.
@@ -110,6 +110,7 @@ ResultsHash *obtainResultsFromAvailableHeadersDecor(
  */
 void vmod_set_expected_drift(const struct vrt_ctx *ctx, VCL_INT drift)
 {
+	(void)ctx;
 	globalTest.expectedDrift.value = drift;
 	globalTest.expectedDrift.set = true;
 }
@@ -122,6 +123,7 @@ void vmod_set_expected_drift(const struct vrt_ctx *ctx, VCL_INT drift)
  */
 void vmod_set_expected_difference(const struct vrt_ctx *ctx, VCL_INT difference)
 {
+	(void)ctx;
 	globalTest.expectedDifference.value = difference;
 	globalTest.expectedDifference.set = true;
 }
@@ -137,6 +139,7 @@ void vmod_set_expected_difference(const struct vrt_ctx *ctx, VCL_INT difference)
  */
 void vmod_set_expected_has_values(const struct vrt_ctx *ctx, VCL_STRING hasValues)
 {
+	(void)ctx;
 	globalTest.expectedHasValues.value = VMODFOD_GET_BOOL(hasValues);
 	globalTest.expectedHasValues.set = true;
 }
@@ -211,6 +214,7 @@ VCL_STRING vmod_get_performance_profile(const struct vrt_ctx *ctx)
  */
 VCL_INT vmod_get_drift(const struct vrt_ctx *ctx)
 {
+	(void)ctx;
 	return global.config->drift;
 }
 
@@ -223,6 +227,7 @@ VCL_INT vmod_get_drift(const struct vrt_ctx *ctx)
  */
 VCL_INT vmod_get_difference(const struct vrt_ctx *ctx)
 {
+	(void)ctx;
 	return global.config->difference;
 }
 
@@ -235,6 +240,7 @@ VCL_INT vmod_get_difference(const struct vrt_ctx *ctx)
  */
 VCL_INT vmod_get_max_concurrency(const struct vrt_ctx *ctx)
 {
+	(void)ctx;
 	return global.config->strings.concurrency;
 }
 
@@ -247,6 +253,7 @@ VCL_INT vmod_get_max_concurrency(const struct vrt_ctx *ctx)
  */
 VCL_BOOL vmod_get_allow_unmatched(const struct vrt_ctx *ctx)
 {
+	(void)ctx;
 	return global.config->b.allowUnmatched;
 }
 
@@ -259,6 +266,7 @@ VCL_BOOL vmod_get_allow_unmatched(const struct vrt_ctx *ctx)
  */
 VCL_BOOL vmod_get_use_performance_graph(const struct vrt_ctx *ctx)
 {
+	(void)ctx;
 	return global.config->usePerformanceGraph;
 }
 
@@ -271,6 +279,7 @@ VCL_BOOL vmod_get_use_performance_graph(const struct vrt_ctx *ctx)
  */
 VCL_BOOL vmod_get_use_predictive_graph(const struct vrt_ctx *ctx)
 {
+	(void)ctx;
 	return global.config->usePredictiveGraph;
 }
 
@@ -284,6 +293,7 @@ VCL_BOOL vmod_get_use_predictive_graph(const struct vrt_ctx *ctx)
  */
 void vmod_track_allocations(const struct vrt_ctx *ctx)
 {
+	(void)ctx;
 	SetUpMemoryTracking();
 }
 
@@ -298,6 +308,7 @@ void vmod_track_allocations(const struct vrt_ctx *ctx)
  */
 VCL_INT vmod_get_allocated(const struct vrt_ctx *ctx)
 {
+	(void)ctx;
 	return (VCL_INT)MemoryTrackingGetAllocated();
 }
 
@@ -311,6 +322,7 @@ VCL_INT vmod_get_allocated(const struct vrt_ctx *ctx)
  */
 VCL_INT vmod_get_dataset_in_use(const struct vrt_ctx *ctx)
 {
+	(void)ctx;
 	return (VCL_INT)fiftyoneDegreesResourceHandleGetUse(
 		(fiftyoneDegreesResourceHandle *)global.manager->active);
 }
