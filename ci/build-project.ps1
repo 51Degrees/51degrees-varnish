@@ -31,7 +31,7 @@ try {
     Pop-Location
 }
 
-$build = Join-Path ($env:RUNNER_TEMP ?? [IO.Path]::GetTempPath()) dist-check
+$build = Join-Path ([IO.Path]::GetTempPath()) dist-check
 Remove-Item -Recurse -Force $build -ErrorAction SilentlyContinue
 New-Item -ItemType Directory -Path $build | Out-Null
 tar xzf "$repo/dist-check.tar.gz" --strip-components=1 -C $build
