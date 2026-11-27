@@ -58,12 +58,15 @@ are not stored in this repository. The `cxx` submodule holds the
 [data](https://github.com/51Degrees/data) repository as `cxx/data`, which has a
 link to each file, and a script downloads them into `cxx/data/device-detection`
 and `cxx/data/ip-intelligence`, where the default data file paths in
-`configure.ac` (`datafile=` and `datafileipi=`) point. Nothing in the build
-downloads a file, so download the Device Detection Lite file and the IP
-Intelligence ASN file first.
+`configure.ac` (`datafile=` and `datafileipi=`) point. The IP Intelligence and
+mixed examples use the IP Intelligence Lite file instead of the ASN file, as
+`example_datafile_ipi` in `Makefile.am` says, because they show registration
+properties. `make check` downloads the three it uses by default when they are
+missing, and never a file named any other way. To run an example by hand,
+download them first.
 
 ```
-sh cxx/data/get-data-files.sh 51Degrees-LiteV4.1.hash 51Degrees-IPIV4AsnIpiV41.ipi
+sh cxx/data/get-data-files.sh 51Degrees-LiteV4.1.hash 51Degrees-IPIV4AsnIpiV41.ipi 51Degrees-LiteV41.ipi
 ```
 
 The script keeps a file that is already there.
@@ -72,6 +75,7 @@ The script keeps a file that is already there.
 
 - `cxx/data/device-detection/51Degrees-LiteV4.1.hash` is more than 10 MB.
 - `cxx/data/ip-intelligence/51Degrees-IPIV4AsnIpiV41.ipi` is more than 1 MB.
+- `cxx/data/ip-intelligence/51Degrees-LiteV41.ipi` is more than 100 MB.
 
 ### Build
 
@@ -131,11 +135,10 @@ docker build -t 51d-varnish-curl .
 docker run -d -p 8080:8080 51d-varnish-curl
 ```
 
-Then send the same request. The image clones `main` from GitHub rather than
-using your checkout, and builds Varnish Cache 8.0.1, which CI does not test.
-The draft pull request
-[#31](https://github.com/51Degrees/51degrees-varnish/pull/31) moves the image
-to 9.1.0.
+Then send the same request. The image builds `main` from GitHub rather than
+your checkout, unless `--build-arg` names another `_51DEGREES_BRANCH` or one
+`_51DEGREES_COMMIT`, and builds Varnish Cache 9.1.0, one of the versions CI
+tests, from its GitHub release after checking its SHA256.
 
 ### Correct output
 
@@ -143,13 +146,18 @@ to 9.1.0.
 `#    top  TEST ./tests/examples/gettingStarted.vtc passed (0.512)`, with its
 own time. The getting-started examples are `gettingStarted.vtc` for Device
 Detection, `ipiGettingStarted.vtc` for IP Intelligence and
-`mixedGettingStarted.vtc` for both. Each test passes or is skipped, and `make`
-exits with 0.
+`mixedGettingStarted.vtc` for both. `liteDataFile.vtc` checks what the examples
+say about the Enterprise data file on the Lite file, and `enterpriseDataFile.vtc`
+that they say nothing on a paid file. Each runs only when the tests are given
+the file it needs, and is skipped otherwise. Each test passes or is skipped, and
+`make` exits with 0.
 
 The request answers with `200 OK` and the values in the response headers,
 such as `x-is-mobile: True` and `x-asn: \"BBC\":1`, as
 `examples/curl/README.md` says. A run of the Docker image on Varnish Cache
-9.1.0, in draft #31, gave these headers.
+9.1.0, in
+[run 43502369747](https://github.com/51Degrees/51degrees-varnish/actions/runs/43502369747),
+gave these headers.
 
 ```
 HTTP/1.1 200 OK
@@ -167,9 +175,19 @@ A property the data file does not have reads `N/A`, as `x-device-type` does
 here, because the Lite file has no DeviceType. IP Intelligence values take the
 form `"value":weight`, with each double quote escaped by a backslash.
 
-The paid data files have many more properties, as the
-[pricing page](https://51degrees.com/pricing?utm_source=github&utm_medium=docs&utm_campaign=51degrees-varnish&utm_content=agents.md&utm_term=correct-output)
-describes.
+Each example that answers with headers ends them with `x-find-out-more`, which
+gives the module and engine repositories and the 51degrees.com pages to read
+next. The example pages end with the same section.
+
+The examples ask for some properties only the Enterprise data file has, such as
+HardwareVendor, HardwareName and DeviceType, or Country, Latitude and Longitude.
+When they read `N/A`, an `x-enterprise` header, or a note on the example's page,
+says where to ask for a copy of the Enterprise data file, so the Docker image
+built from these changes also sends `x-enterprise`.
+
+The Enterprise data files have many more properties.
+[Contact us](https://51degrees.com/contact-us?utm_source=github&utm_medium=docs&utm_campaign=51degrees-varnish&utm_content=agents.md&utm_term=correct-output)
+for a copy.
 
 ### Cloud examples
 
@@ -206,11 +224,21 @@ There are none. The Varnish modules work only on-premise, with a data file.
   your distribution carries.
 - **Port 8080 in use.** `varnishd` then cannot listen. Pick another address
   with `-a`, and send the request there.
-- **What CI does not test.** CI's tests use the Lite file that common-ci
-  fetches, and the larger paid file, rather than a copy downloaded into
-  `cxx/data` (`ci/run-unit-tests.ps1` and `ci/run-integration-tests.ps1`).
-  `ci/fetch-assets.ps1` downloads the ASN file with the data repository's
-  script, as the steps here do. CI does not build the Docker image.
+- **What CI does not test.** `ci/fetch-assets.ps1` takes the free files from
+  common-ci's assets, which each run fetches once and caches, rather than
+  downloading them, and copies them into `cxx/data` where a fresh clone keeps
+  them. The unit tests then run `make check` with nothing set
+  (`ci/run-unit-tests.ps1`), and the integration tests again with the larger
+  paid file (`ci/run-integration-tests.ps1`), which then runs the JavaScript
+  example in Chrome and Firefox with the `ModuleJavaScript` tests of the
+  shared suite in 51Degrees/selenium-api-tests. The Docker example has its own
+  workflow, `.github/workflows/docker-example.yml`, which builds the image
+  from the commit the run checks out when a pull request changes the example
+  or what the image builds, and checks the README's request and `curl.sh`.
+  It builds the image with the two free data files from common-ci's
+  fetch-assets beside the Dockerfile, and with
+  `_51DEGREES_DOWNLOAD_DATA_FILES=false`, so the build fails rather than
+  downloads a file that is missing.
 
 ## Building the modules
 
@@ -221,8 +249,8 @@ code compiled differently from Device Detection, as the README explains.
 adding the test functions for `--with-config=test`. Git ignores both outputs,
 so change the templates. The module sources build with `-Werror`.
 
-Each example but `examples/hash/config.vcl` has a test in `tests/examples`
-that rewrites the VCL's data file paths and backend and runs it. `make check`
+Each example has a test in `tests/examples` that rewrites the VCL's data
+file paths and backend and runs it. `make check`
 runs them all, so a change to an example needs its test to pass.
 
 ## CI
@@ -232,7 +260,9 @@ The workflows call the shared workflows in
 `ci/`. `ci/setup-environment.ps1` builds each Varnish or Vinyl Cache version
 from source and checks its SHA256, so a version added to `ci/options.json`
 needs its address and SHA256 added there too. The nightly submodule update
-moves `cxx` with a pull request into `rc`.
+moves `cxx` with a pull request into `rc`. The README lists the
+[names the tests read](README.md#names-the-tests-read), and `ci/README.md`
+the secrets CI needs.
 
 ## Versions
 

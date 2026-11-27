@@ -20,8 +20,6 @@
 # such notice(s) shall fulfill the requirements of that article.
 #
 
-Test VMOD Functions
-===================
 $Function VOID set_expected_drift(INT)
 $Function VOID set_expected_difference(INT)
 $Function VOID set_expected_has_values(STRING)
@@ -32,3 +30,6 @@ $Function INT get_max_concurrency()
 $Function BOOL get_allow_unmatched()
 $Function BOOL get_use_performance_graph()
 $Function BOOL get_use_predictive_graph()
+$Function VOID track_allocations()
+$Function INT get_allocated()
+$Function INT get_dataset_in_use()

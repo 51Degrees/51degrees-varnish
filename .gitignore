@@ -11,6 +11,7 @@ src/ipi/.libs/*
 src/ipi/vcc_if.*
 src/ipi/vmod_fiftyonedegrees_ipi.man.rst
 src/ipi/vmod_fiftyonedegrees_ipi.rst
+src/ipi/vmod_vcs_version.txt
 vmod_fiftyonedegrees_ipi.4
 src/dd/vmod_fiftyonedegrees.vcc
 src/dd/vmod_fiftyonedegrees_extra.h
@@ -24,6 +25,7 @@ Makefile.in
 src/dd/vcc_if.*
 src/dd/vmod_fiftyonedegrees.man.rst
 src/dd/vmod_fiftyonedegrees.rst
+src/dd/vmod_vcs_version.txt
 
 vmod_fiftyonedegrees.4
 compile
@@ -36,7 +38,4 @@ stamp-h1
 test-results
 package-build
 *.tar.gz
-tests/examples/jsExample/node_modules
-tests/examples/jsExample/package-lock.json
-tests/examples/jsExample/cdn_test_results.xml
 tests/performance/build

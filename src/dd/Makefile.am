@@ -1,4 +1,4 @@
-AM_CPPFLAGS = -Wall -Wno-unused-variable -Wno-missing-braces -Wno-implicit-function-declaration -Wno-strict-aliasing -Werror
+AM_CPPFLAGS = -Wall -Wextra $(WARNINGS_AS_ERRORS)
 
 vmoddir = @VMOD_DIR@
 vmod_LTLIBRARIES = libvmod_fiftyonedegrees.la
@@ -19,6 +19,7 @@ libvmod_fiftyonedegrees_la_SOURCES = \
 	../../cxx/src/common/component.c \
 	../../cxx/src/common/data.c \
 	../../cxx/src/common/dataset.c \
+	../../cxx/src/common/date.c \
 	../../cxx/src/common/evidence.c \
 	../../cxx/src/common/exceptionsc.c \
 	../../cxx/src/common/file.c \
@@ -50,7 +51,7 @@ libvmod_fiftyonedegrees_la_SOURCES = \
 	../../cxx/src/common/wkbtot.c \
 	../../cxx/src/common/yamlfile.c
 
-datafile = $(or $(51DEGREES_DD_PATH),@FIFTYONEDEGREES_DATAFILE_ABSOLUTE@)
+datafile = $(or $(_51DEGREES_DD_PATH),@FIFTYONEDEGREES_DATAFILE_ABSOLUTE@)
 
 testargs = 
 
@@ -73,10 +74,25 @@ vcc_if.c: vcc_if.h
 vcc_if.h: @VMODTOOL@ $(builddir)/vmod_fiftyonedegrees.vcc
 	@VMODTOOL@ $(builddir)/vmod_fiftyonedegrees.vcc
 
+# vmodtool writes the commit it was built from to vmod_vcs_version.txt,
+# so a build from the release tarball, which has no git, still knows it.
+# The vmodtool of Varnish 6.0 writes no such file.
+dist-hook:
+	if test -f vmod_vcs_version.txt; then \
+		cp vmod_vcs_version.txt $(distdir)/; \
+	fi
+
 VMOD_TESTS = $(top_srcdir)/src/dd/tests/*.vtc
+
+# Downloads the free data files when a fresh clone lacks them (see the top
+# Makefile.am).
+.PHONY: data-files
+data-files:
+	@$(MAKE) -C $(top_builddir) data-files
+
 .PHONY: $(VMOD_TESTS)
 
-$(top_srcdir)/src/dd/tests/*.vtc: libvmod_fiftyonedegrees.la
+$(top_srcdir)/src/dd/tests/*.vtc: libvmod_fiftyonedegrees.la data-files
 	@VARNISHTEST@ -Dvarnishd=@VARNISHD@ -Dvcache=@VCACHE@ -Dvmod_fod_datafile=$(datafile) -Dvmod_topbuild=$(abs_top_builddir) $@ $(testargs) \
 	|| EC=$$?; if [ "$$EC" != "77" ] ; then (exit $$EC) ; fi;
 
@@ -107,6 +123,7 @@ noinst_HEADERS = \
 	../../cxx/src/common/headers.h \
 	../../cxx/src/common/indices.h \
 	../../cxx/src/common/ip.h \
+	../../cxx/src/common/ipiSymbols.h \
 	../../cxx/src/common/json.h \
 	../../cxx/src/common/list.h \
 	../../cxx/src/common/memory.h \
@@ -128,6 +145,7 @@ noinst_HEADERS = \
 	../../cxx/src/common/textfile.h \
 	../../cxx/src/common/threading.h \
 	../../cxx/src/common/tree.h \
+	../../cxx/src/common/unaligned.h \
 	../../cxx/src/common/value.h \
 	../../cxx/src/common/weightedItem.h \
 	../../cxx/src/common/wkbtot.h \
@@ -153,8 +171,10 @@ CLEANFILES = \
 	$(builddir)/vcc_if.c \
 	$(builddir)/vcc_if.h \
 	$(builddir)/vmod_fiftyonedegrees.rst \
-	$(builddir)/vmod_fiftyonedegrees.man.rst \
-	$(builddir)/vmod_vcs_version.txt
+	$(builddir)/vmod_fiftyonedegrees.man.rst
+
+# Kept by make clean, as a build from the release tarball reads it.
+MAINTAINERCLEANFILES = $(builddir)/vmod_vcs_version.txt
 
 # configure writes these. In a source checkout they are left in place, as the
 # .vcc file is tracked.

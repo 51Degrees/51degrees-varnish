@@ -20,29 +20,37 @@
 # such notice(s) shall fulfill the requirements of that article.
 #
 
-varnishtest "The DEFAULT performance profile gives the same answers"
+varnishtest "The DEFAULT performance profile holds the named properties in memory"
 
 server s1 -repeat 20 {
 	rxreq
 	txresp
 } -start
 
+# The VCL loads a copy of the data file, which is then emptied. The named
+# property still has its value, so what it reads is held in memory. Asn is not
+# named, so it is not loaded.
+shell {cp "${vmod_ipi_datafile}" "${tmpdir}/copy.ipi"}
+
 ${vcache} v1 -vcl+backend {
 	import fiftyonedegrees_ipi from "${vmod_topbuild}/src/ipi/.libs/libvmod_fiftyonedegrees_ipi.so";
 
 	sub vcl_init {
 		fiftyonedegrees_ipi.set_performance_profile("DEFAULT");
+		fiftyonedegrees_ipi.set_properties("AsnName");
 		fiftyonedegrees_ipi.set_max_concurrency(10);
-		fiftyonedegrees_ipi.start("${vmod_ipi_datafile}");
+		fiftyonedegrees_ipi.start("${tmpdir}/copy.ipi");
 	}
 	sub vcl_deliver {
 		set resp.http.asn = fiftyonedegrees_ipi.match("AsnName,Asn", "212.58.224.22");
 	}
 } -start
 
+shell {: > "${tmpdir}/copy.ipi"}
+
 client c1 {
 	txreq
 	rxresp
 	expect resp.status == 200
-	expect resp.http.asn == {\"BBC\":1,\"AS2818\":1}
+	expect resp.http.asn == {\"BBC\":1,N/A}
 } -run

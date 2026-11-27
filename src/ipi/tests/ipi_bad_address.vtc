@@ -38,7 +38,8 @@ ${vcache} v1 -vcl+backend {
 		set resp.http.empty = fiftyonedegrees_ipi.match("AsnName", "");
 		set resp.http.malformed = fiftyonedegrees_ipi.match("AsnName", "not an address");
 		set resp.http.too-many = fiftyonedegrees_ipi.match("AsnName", "1.2.3.4.5");
-		set resp.http.list-first = fiftyonedegrees_ipi.match("AsnName", "212.58.224.22, 2.248.13.139");
+		set resp.http.list = fiftyonedegrees_ipi.match("AsnName", "212.58.224.22, 2.248.13.139");
+		set resp.http.port = fiftyonedegrees_ipi.match("AsnName", "212.58.224.22:80");
 	}
 } -start
 
@@ -54,7 +55,8 @@ client c1 {
 	expect resp.http.empty == "N/A"
 	expect resp.http.malformed == "N/A"
 	expect resp.http.too-many == "N/A"
-	expect resp.http.list-first == {\"BBC\":1}
+	expect resp.http.list == "N/A"
+	expect resp.http.port == {\"BBC\":1}
 } -run
 
 logexpect l1 -wait

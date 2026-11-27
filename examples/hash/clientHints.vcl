@@ -50,6 +50,12 @@ sub vcl_synth {
     if (resp.status == 800) {
         set resp.status = 200;
         set resp.http.Content-Type = "text/html; charset=utf-8";
+		// HardwareVendor, HardwareName and DeviceType are only in the
+		// Enterprise data file, and read N/A on a free one. Then the page says
+		// where to ask for a copy.
+		if (fiftyonedegrees.match_all("HardwareVendor,HardwareName,DeviceType") ~ "N/A") {
+			set req.http.x-enterprise = {"<p>Some of these properties need the Enterprise data file. <a href="https://51degrees.com/contact-us?utm_source=code&utm_medium=example&utm_campaign=51degrees-varnish&utm_content=examples-hash-clienthints-vcl&utm_term=enterprise-data-file">Contact us</a> for a copy.</p>"};
+		}
 
 		// Varnish Cache 9.1.0 and Vinyl Cache 9.1.0 never finish a request
 		// whose body is joined from more than 16 parts, so the platform and
@@ -136,7 +142,17 @@ sub vcl_synth {
 		Platform: "} + fiftyonedegrees.match_all("PlatformVendor,PlatformName,PlatformVersion") + {"<br />
 		Browser: "} + fiftyonedegrees.match_all("BrowserVendor,BrowserName,BrowserVersion") + {"
     </p>
-</div>"};
+"} + req.http.x-enterprise + {"
+</div>
+<hr />
+<h3>Find out more</h3>
+<ul>
+	<li>The engine this example uses: <a href="https://github.com/51Degrees/51degrees-cxx">https://github.com/51Degrees/51degrees-cxx</a></li>
+	<li>The Varnish modules: <a href="https://github.com/51Degrees/51degrees-varnish">https://github.com/51Degrees/51degrees-varnish</a></li>
+	<li><a href="https://51degrees.com/device-detection?utm_source=code&utm_medium=example&utm_campaign=51degrees-varnish&utm_content=examples-hash-clienthints-vcl&utm_term=device-detection">Device detection</a></li>
+	<li><a href="https://51degrees.com/pricing?utm_source=code&utm_medium=example&utm_campaign=51degrees-varnish&utm_content=examples-hash-clienthints-vcl&utm_term=pricing">Data files and pricing</a></li>
+</ul>
+"};
         return (deliver);
     }
 }
@@ -144,15 +160,3 @@ sub vcl_synth {
 sub vcl_init {
 	fiftyonedegrees.start("/etc/varnish/51Degrees-LiteV4.1.hash");
 }
-
-/**
-Find out more
-
-The engine this example uses:
-https://github.com/51Degrees/51degrees-cxx
-The Varnish modules:
-https://github.com/51Degrees/51degrees-varnish
-
-Device detection: https://51degrees.com/device-detection?utm_source=github&utm_medium=example&utm_campaign=51degrees-varnish&utm_content=examples-hash-clienthints-vcl&utm_term=device-detection
-Data files and pricing: https://51degrees.com/pricing?utm_source=github&utm_medium=example&utm_campaign=51degrees-varnish&utm_content=examples-hash-clienthints-vcl&utm_term=pricing
-*/

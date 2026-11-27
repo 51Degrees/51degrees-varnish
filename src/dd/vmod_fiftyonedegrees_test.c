@@ -43,7 +43,7 @@ typedef struct vmodfod_global_test_t {
 /**
  * Set default test expected value
  */
-vmodfod_global_test globalTest = {{false, 0}, {false, 0}};
+vmodfod_global_test globalTest = {{false, 0}, {false, 0}, {false, false}};
 
 /**
  * Global structure available to the module.
@@ -110,6 +110,7 @@ ResultsHash *obtainResultsFromAvailableHeadersDecor(
  */
 void vmod_set_expected_drift(const struct vrt_ctx *ctx, VCL_INT drift)
 {
+	(void)ctx;
 	globalTest.expectedDrift.value = drift;
 	globalTest.expectedDrift.set = true;
 }
@@ -122,6 +123,7 @@ void vmod_set_expected_drift(const struct vrt_ctx *ctx, VCL_INT drift)
  */
 void vmod_set_expected_difference(const struct vrt_ctx *ctx, VCL_INT difference)
 {
+	(void)ctx;
 	globalTest.expectedDifference.value = difference;
 	globalTest.expectedDifference.set = true;
 }
@@ -137,8 +139,24 @@ void vmod_set_expected_difference(const struct vrt_ctx *ctx, VCL_INT difference)
  */
 void vmod_set_expected_has_values(const struct vrt_ctx *ctx, VCL_STRING hasValues)
 {
+	(void)ctx;
 	globalTest.expectedHasValues.value = VMODFOD_GET_BOOL(hasValues);
 	globalTest.expectedHasValues.set = true;
+}
+
+/**
+ * Returns true if the config holds the data as the profile does. In memory
+ * and low memory hold the strings in the same way, so whether all of the data
+ * is in memory tells them apart.
+ * @param profile the preset configuration to compare with
+ * @return true if the config matches the profile
+ */
+static bool isPerformanceProfile(const ConfigHash *profile)
+{
+	return global.config->b.b.allInMemory == profile->b.b.allInMemory
+		&& global.config->strings.loaded == profile->strings.loaded
+		&& global.config->strings.capacity == profile->strings.capacity
+		&& global.config->strings.concurrency == profile->strings.concurrency;
 }
 
 /**
@@ -159,21 +177,15 @@ VCL_STRING vmod_get_performance_profile(const struct vrt_ctx *ctx)
 	// Reserved some workspace
 	u = vmodfodReserve(ctx->ws, &p);
 
-	if (global.config->strings.loaded == HashInMemoryConfig.strings.loaded
-		&& global.config->strings.capacity == HashInMemoryConfig.strings.capacity
-		&& global.config->strings.concurrency == HashInMemoryConfig.strings.concurrency)
+	if (isPerformanceProfile(&HashInMemoryConfig))
 	{
 		v = snprintf(p, u, "IN_MEMORY");
 	}
-	else if (global.config->strings.loaded == HashHighPerformanceConfig.strings.loaded
-		&& global.config->strings.capacity == HashHighPerformanceConfig.strings.capacity
-		&& global.config->strings.concurrency == HashHighPerformanceConfig.strings.concurrency)
+	else if (isPerformanceProfile(&HashHighPerformanceConfig))
 	{
 		v = snprintf(p, u, "HIGH_PERFORMANCE");
 	}
-	else if (global.config->strings.loaded == HashLowMemoryConfig.strings.loaded
-		&& global.config->strings.capacity == HashLowMemoryConfig.strings.capacity
-		&& global.config->strings.concurrency == HashLowMemoryConfig.strings.concurrency)
+	else if (isPerformanceProfile(&HashLowMemoryConfig))
 	{
 		v = snprintf(p, u, "LOW_MEMORY");
 	}
@@ -202,6 +214,7 @@ VCL_STRING vmod_get_performance_profile(const struct vrt_ctx *ctx)
  */
 VCL_INT vmod_get_drift(const struct vrt_ctx *ctx)
 {
+	(void)ctx;
 	return global.config->drift;
 }
 
@@ -214,6 +227,7 @@ VCL_INT vmod_get_drift(const struct vrt_ctx *ctx)
  */
 VCL_INT vmod_get_difference(const struct vrt_ctx *ctx)
 {
+	(void)ctx;
 	return global.config->difference;
 }
 
@@ -226,6 +240,7 @@ VCL_INT vmod_get_difference(const struct vrt_ctx *ctx)
  */
 VCL_INT vmod_get_max_concurrency(const struct vrt_ctx *ctx)
 {
+	(void)ctx;
 	return global.config->strings.concurrency;
 }
 
@@ -238,6 +253,7 @@ VCL_INT vmod_get_max_concurrency(const struct vrt_ctx *ctx)
  */
 VCL_BOOL vmod_get_allow_unmatched(const struct vrt_ctx *ctx)
 {
+	(void)ctx;
 	return global.config->b.allowUnmatched;
 }
 
@@ -250,6 +266,7 @@ VCL_BOOL vmod_get_allow_unmatched(const struct vrt_ctx *ctx)
  */
 VCL_BOOL vmod_get_use_performance_graph(const struct vrt_ctx *ctx)
 {
+	(void)ctx;
 	return global.config->usePerformanceGraph;
 }
 
@@ -262,5 +279,50 @@ VCL_BOOL vmod_get_use_performance_graph(const struct vrt_ctx *ctx)
  */
 VCL_BOOL vmod_get_use_predictive_graph(const struct vrt_ctx *ctx)
 {
+	(void)ctx;
 	return global.config->usePredictiveGraph;
+}
+
+/**
+ * VMOD Function
+ * Track every allocation the 51Degrees library makes from now on. Call it
+ * first in vcl_init, before the data set is loaded, so that everything the
+ * library frees was tracked when it was allocated. Tracking is left off
+ * otherwise, as it slows every allocation down.
+ * @param ctx the context
+ */
+void vmod_track_allocations(const struct vrt_ctx *ctx)
+{
+	(void)ctx;
+	SetUpMemoryTracking();
+}
+
+/**
+ * VMOD Function
+ * Get the number of bytes the 51Degrees library has allocated, since
+ * track_allocations was called, and not yet freed. A test can then check
+ * that a function frees everything it allocates for a request, such as the
+ * results which hold a reference to the data set.
+ * @param ctx the context
+ * @return the bytes allocated and not yet freed
+ */
+VCL_INT vmod_get_allocated(const struct vrt_ctx *ctx)
+{
+	(void)ctx;
+	return (VCL_INT)MemoryTrackingGetAllocated();
+}
+
+/**
+ * VMOD Function
+ * Get the number of references to the active data set that are held. A
+ * reference is a count rather than an allocation, so this lets a test check
+ * that a function releases the data set it takes.
+ * @param ctx the context
+ * @return the references to the active data set held
+ */
+VCL_INT vmod_get_dataset_in_use(const struct vrt_ctx *ctx)
+{
+	(void)ctx;
+	return (VCL_INT)fiftyoneDegreesResourceHandleGetUse(
+		(fiftyoneDegreesResourceHandle *)global.manager->active);
 }
